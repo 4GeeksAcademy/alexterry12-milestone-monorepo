@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request Information — TrackFlow</title>
+  <meta name="description" content="Request a logistics quote from TrackFlow. Tell us about your e-commerce warehousing, last-mile delivery, and reverse logistics needs across the US and Spain.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: '#12213B',
+            slate: '#475569',
+            paper: '#F7F6F2',
+            amber: '#E8A33D',
+            bordergray: '#E2E4E4'
+          },
+          fontFamily: {
+            display: ['Oswald', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+            mono: ['"IBM Plex Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-body bg-paper text-slate">
+  <header class="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-y-2">
+      <a href="index.html" class="text-2xl font-bold text-navy">TrackFlow</a>
+      <nav aria-label="Main navigation">
+        <ul class="flex list-none items-center gap-4 sm:gap-6 text-sm sm:text-base font-medium text-gray-700">
+          <li><a href="index.html" class="hover:text-blue-600 transition-colors">Home</a></li>
+          <li><a href="index.html#services" class="hover:text-blue-600 transition-colors">Services</a></li>
+          <li><a href="index.html#coverage" class="hover:text-blue-600 transition-colors">Coverage</a></li>
+          <li><a href="index.html#contact" class="hover:text-blue-600 transition-colors">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="bg-paper py-16 sm:py-24">
+      <div class="max-w-3xl mx-auto px-4">
+        <p class="font-mono text-sm uppercase tracking-wide text-amber text-center mb-3">REQUEST INFORMATION</p>
+        <h1 class="font-display text-3xl sm:text-4xl text-navy text-center">Tell us about your logistics needs</h1>
+        <p class="text-center text-slate mt-2 mb-10">Fill out the form below and our commercial team will contact you within 24-48 hours.</p>
+
+        <form id="application-form" novalidate class="bg-white border border-bordergray rounded-lg p-6 sm:p-10 space-y-8">
+          <fieldset class="space-y-6">
+            <legend class="font-display text-navy text-xl mb-4">Company &amp; Contact</legend>
+
+            <div>
+              <label for="company-name" class="block text-navy font-medium mb-1">Company name</label>
+              <input type="text" id="company-name" name="companyName" required class="border border-bordergray rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-amber">
+              <p id="companyName-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+            </div>
+
+            <div>
+              <label for="contact-person" class="block text-navy font-medium mb-1">Contact person (first and last name)</label>
+              <input type="text" id="contact-person" name="contactPerson" required class="border border-bordergray rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-amber">
+              <p id="contactPerson-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+            </div>
+
+            <div>
+              <label for="email" class="block text-navy font-medium mb-1">Corporate email</label>
+              <input type="email" id="email" name="email" required class="border border-bordergray rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-amber">
+              <p id="email-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+            </div>
+
+            <div>
+              <label for="phone" class="block text-navy font-medium mb-1">Phone</label>
+              <input type="tel" id="phone" name="phone" required placeholder="+1 213 555 0147" class="border border-bordergray rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-amber">
+              <p id="phone-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+            </div>
+
+            <div>
+              <label for="website" class="block text-navy font-medium mb-1">Company website (optional)</label>
+              <input type="url" id="website" name="website" placeholder="https://" class="border border-bordergray rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-amber">
+              <p id="website-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+            </div>
+          </fieldset>
+
+          <fieldset class="space-y-6">
+            <legend class="font-display text-navy text-xl mb-4">Operations</legend>
+
+            <div>
+              <label for="country" class="block text-navy font-medium mb-1">Main operating country</label>
+              <select id="country" name="country" required class="border border-bordergray rounded-md px-4 py-2 w-full bg-white focus:outline-none focus:ring-2 focus:ring-amber">
+                <option value="" disabled selected>Select an option</option>
+                <option value="United States">United States</option>
+                <option value="Spain">Spain</option>
+                <option value="Both">Both</option>
+                <option value="Other">Other</option>
+              </select>
+              <p id="country-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+            </div>
+
+            <div>
+              <label for="product-type" class="block text-navy font-medium mb-1">Product type</label>
+              <select id="product-type" name="productType" required class="border border-bordergray rounded-md px-4 py-2 w-full bg-white focus:outline-none focus:ring-2 focus:ring-amber">
+                <option value="" disabled selected>Select an option</option>
+                <option value="Fashion">Fashion</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Cosmetics">Cosmetics</option>
+                <option value="Food">Food</option>
+                <option value="Other">Other</option>
+              </select>
+              <p id="productType-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+            </div>
+
+            <div>
+              <label for="volume" class="block text-navy font-medium mb-1">Estimated monthly shipping volume</label>
+              <select id="volume" name="volume" required class="border border-bordergray rounded-md px-4 py-2 w-full bg-white focus:outline-none focus:ring-2 focus:ring-amber">
+                <option value="" disabled selected>Select an option</option>
+                <option value="0-100">0-100</option>
+                <option value="101-500">101-500</option>
+                <option value="501-2000">501-2000</option>
+                <option value="2000+">2000+</option>
+                <option value="Not sure">Not sure</option>
+              </select>
+              <p id="volume-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+              <p id="volume-warning" class="hidden text-amber text-sm mt-2 font-medium"></p>
+            </div>
+          </fieldset>
+
+          <fieldset class="space-y-6">
+            <legend class="font-display text-navy text-xl mb-4">Interest &amp; Fit</legend>
+
+            <div>
+              <p class="block text-navy font-medium mb-2">Services of interest</p>
+              <label class="flex items-center gap-2 mb-2 cursor-pointer">
+                <input type="checkbox" id="service-warehousing" name="services" value="Warehousing" class="w-4 h-4 accent-amber"> Warehousing
+              </label>
+              <label class="flex items-center gap-2 mb-2 cursor-pointer">
+                <input type="checkbox" id="service-lastmile" name="services" value="Last mile" class="w-4 h-4 accent-amber"> Last mile
+              </label>
+              <label class="flex items-center gap-2 mb-2 cursor-pointer">
+                <input type="checkbox" id="service-reverse" name="services" value="Reverse logistics" class="w-4 h-4 accent-amber"> Reverse logistics
+              </label>
+              <p id="services-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+            </div>
+
+            <div>
+              <p class="block text-navy font-medium mb-2 mt-6">Do you currently work with another 3PL?</p>
+              <label class="flex items-center gap-2 mb-2 cursor-pointer">
+                <input type="radio" id="3pl-yes" name="current3pl" value="Yes" class="w-4 h-4 accent-amber"> Yes
+              </label>
+              <label class="flex items-center gap-2 mb-2 cursor-pointer">
+                <input type="radio" id="3pl-no" name="current3pl" value="No" class="w-4 h-4 accent-amber"> No
+              </label>
+              <label class="flex items-center gap-2 mb-2 cursor-pointer">
+                <input type="radio" id="3pl-evaluating" name="current3pl" value="Evaluating options" class="w-4 h-4 accent-amber"> Evaluating options
+              </label>
+              <p id="current3pl-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+            </div>
+          </fieldset>
+
+          <fieldset class="space-y-6">
+            <legend class="font-display text-navy text-xl mb-4">Additional Information</legend>
+
+            <div>
+              <label for="comments" class="block text-navy font-medium mb-1">Comments or specific needs (optional)</label>
+              <textarea id="comments" name="comments" maxlength="500" rows="4" class="border border-bordergray rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-amber"></textarea>
+              <p id="comments-counter" class="text-slate text-sm mt-1">500 characters remaining</p>
+              <p id="comments-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+            </div>
+
+            <div>
+              <label class="flex items-start gap-2 mt-6 cursor-pointer">
+                <input type="checkbox" id="privacy" name="privacy" required class="w-4 h-4 accent-amber mt-1">
+                <span class="text-slate">I accept the privacy policy</span>
+              </label>
+              <p id="privacy-error" class="error-message text-red-600 text-sm mt-1 hidden" role="alert"></p>
+            </div>
+          </fieldset>
+
+          <div class="flex flex-col sm:flex-row gap-4 pt-4">
+            <button type="submit" class="bg-amber text-navy font-semibold px-8 py-3 rounded-lg hover:bg-navy hover:text-white transition-colors">Submit request</button>
+            <button type="reset" class="border border-bordergray text-navy font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors">Clear form</button>
+          </div>
+        </form>
+
+        <div id="success-message" class="hidden mt-8 bg-green-50 border border-green-300 rounded-lg p-6 text-center">
+          <h3 class="font-display text-navy text-xl mb-2">Thank you for your interest in TrackFlow!</h3>
+          <p class="text-slate">We have received your request. Our commercial team will review your information and contact you within the next 24-48 hours to schedule a call and learn about your logistics needs in detail.</p>
+          <p class="text-slate mt-2">If you have any urgent inquiry, write to us directly at <a href="mailto:comercial@trackflow.com" class="text-amber underline">comercial@trackflow.com</a></p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="validation.js"></script>
+</body>
+</html>
