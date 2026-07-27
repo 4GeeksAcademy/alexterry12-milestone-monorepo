@@ -1,0 +1,12 @@
+{
+  "name": "trackflow-milestone-2",
+  "version": "1.0.0",
+  "description": "TrackFlow Milestone 2 - Programming Fundamentals: warehouse and carrier data processing utilities",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
