@@ -12,9 +12,11 @@
 - Milestone 4 — Next.js apps:
   - uis/website — home route with all Milestone 1 sections + /application form (validation working)
   - uis/backoffice — own layout + Milestone 2 logic imported from src/ and rendered on /operations
+- Removed root `node_modules` from all git history; added standard Node `.gitignore` (GitHub Node.gitignore)
 
 ## In progress
-- Final commit, PR, and submission
+- Final commit, PR, and submission (commit `.gitignore` + force-push rewritten history)
 
 ## Next
-- (nothing — milestone complete once submitted)
+- Commit root `.gitignore`, then force-push rewritten branches to origin
+- (nothing else — milestone complete once submitted)
