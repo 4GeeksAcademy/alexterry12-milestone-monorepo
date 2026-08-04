@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "incident-analysis"
+version = "0.1.0"
+description = "TrackFlow incident CSV validation and analysis (shared by CLI and API)"
+requires-python = ">=3.10"
+dependencies = []
+
+# Map import name incident_analysis → this directory (which contains __init__.py).
+[tool.setuptools]
+packages = ["incident_analysis"]
+
+[tool.setuptools.package-dir]
+incident_analysis = "."
