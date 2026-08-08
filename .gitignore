@@ -158,3 +158,4 @@ __pycache__/
 *.egg-info/
 .env.local
 results.csv
+suppliers.json

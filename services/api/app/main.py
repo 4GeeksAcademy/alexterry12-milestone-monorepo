@@ -5,13 +5,13 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import incidents
+from app.routers import incidents, suppliers
 
 app = FastAPI(
     title="TrackFlow Company API",
     description=(
-        "Centralized FastAPI backend. Phase 2: incident CSV analysis "
-        "using the shared incident_analysis package."
+        "Centralized FastAPI backend for TrackFlow — incident analysis "
+        "and supplier directory."
     ),
     version="0.1.0",
 )
@@ -36,6 +36,7 @@ app.add_middleware(
 )
 
 app.include_router(incidents.router)
+app.include_router(suppliers.router)
 
 
 @app.get("/health")
