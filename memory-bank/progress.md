@@ -15,8 +15,7 @@
 - Removed root `node_modules` from all git history; added standard Node `.gitignore` (GitHub Node.gitignore)
 
 ## In progress
-- Final commit, PR, and submission (commit `.gitignore` + force-push rewritten history)
+- AUTH-02: login, registration, account profile, route guard, logout, and centralized 401 handling in uis/backoffice. Protected API clients (`authApi`, `incidentsApi`, `suppliersApi`) send bearer tokens; 401 clears `trackflow_token` and `router.replace("/login")` (no-op on `/login`/`/register`). TypeScript compiles cleanly. Needs manual testing against running API.
 
 ## Next
-- Commit root `.gitignore`, then force-push rewritten branches to origin
-- (nothing else — milestone complete once submitted)
+- Final commit, PR, and submission
