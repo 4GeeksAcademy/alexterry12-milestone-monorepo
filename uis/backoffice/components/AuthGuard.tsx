@@ -9,7 +9,12 @@ import {
   registerAuthRedirect,
 } from "@/lib/authApi";
 
-const PUBLIC_PATHS = new Set(["/login", "/register"]);
+const PUBLIC_PATHS = new Set([
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+]);
 
 type AuthGuardProps = {
   children: React.ReactNode;

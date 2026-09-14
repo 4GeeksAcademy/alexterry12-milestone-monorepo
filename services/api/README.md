@@ -54,6 +54,13 @@ The backoffice runs in the browser on a different origin (e.g. `:3000`) than
 this API. `CORSMiddleware` allows origins listed in `CORS_ORIGINS`
 (comma-separated). Default: `http://localhost:3000,http://127.0.0.1:3000`.
 
+### Password reset email
+
+`POST /auth/forgot-password` sends mail through Resend. Set both
+`RESEND_API_KEY` and `FRONTEND_URL` in `services/api/.env` (see `.env.example`).
+`FRONTEND_URL` is the backoffice origin used to build reset links
+(e.g. `http://localhost:3000`).
+
 ### Example requests
 
 ```bash

@@ -107,6 +107,19 @@ def update_user(
     return _user_from_doc(updated) if updated is not None else None
 
 
+def set_user_password(user_id: str, plain_password: str) -> User | None:
+    """Hash and store a new password. Returns None if the user does not exist."""
+    if _find_user_doc(user_id) is None:
+        return None
+
+    users_table.update(
+        {"hashed_password": hash_password(plain_password)},
+        _user_query.id == user_id,
+    )
+    updated = _find_user_doc(user_id)
+    return _user_from_doc(updated) if updated is not None else None
+
+
 def delete_user(user_id: str) -> bool:
     """Delete a user and linked profile. Returns False if the user was missing."""
     if _find_user_doc(user_id) is None:

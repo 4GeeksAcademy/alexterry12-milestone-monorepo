@@ -15,7 +15,9 @@
 - Removed root `node_modules` from all git history; added standard Node `.gitignore` (GitHub Node.gitignore)
 
 ## In progress
-- AUTH-02: login, registration, account profile, route guard, logout, and centralized 401 handling in uis/backoffice. Protected API clients (`authApi`, `incidentsApi`, `suppliersApi`) send bearer tokens; 401 clears `trackflow_token` and `router.replace("/login")` (no-op on `/login`/`/register`). TypeScript compiles cleanly. Needs manual testing against running API.
+- AUTH-02 password reset UI in uis/backoffice: `/forgot-password`, `/reset-password` (Suspense + `?token=`), `/account/change-password`, login `?reset=1` banner + forgot link. Public paths updated in AuthGuard/authApi. API clients: `forgotPassword`, `resetPassword`, `changePassword`.
+- AUTH-02 API password lifecycle already in services/api (forgot/reset/change-password + Resend).
 
 ## Next
 - Final commit, PR, and submission
+- Manual end-to-end test of reset email flow with RESEND_API_KEY + FRONTEND_URL
