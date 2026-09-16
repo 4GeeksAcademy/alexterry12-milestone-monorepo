@@ -7,6 +7,7 @@ const navItems = [
   { href: "/", label: "Overview" },
   { href: "/operations", label: "Operations" },
   { href: "/incidents", label: "Incidents" },
+  { href: "/incident-manager", label: "Incident Manager" },
   { href: "/suppliers", label: "Suppliers" },
   { href: "#", label: "People" },
   { href: "#", label: "Settings" },
@@ -22,7 +23,7 @@ export function SidebarNav() {
           item.href !== "#" &&
           (item.href === "/"
             ? pathname === "/"
-            : pathname.startsWith(item.href));
+            : pathname === item.href || pathname.startsWith(`${item.href}/`));
 
         return (
           <Link

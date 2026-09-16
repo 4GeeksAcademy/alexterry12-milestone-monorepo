@@ -2,10 +2,11 @@
 
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from app.routers import incidents, suppliers
+from app.routers import incident_manager, incidents, suppliers
 
 app = FastAPI(
     title="TrackFlow Company API",
@@ -36,7 +37,19 @@ app.add_middleware(
 )
 
 app.include_router(incidents.router)
+app.include_router(incident_manager.router)
 app.include_router(suppliers.router)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(
+    _request: Request,
+    _exc: Exception,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An unexpected error occurred."},
+    )
 
 
 @app.get("/health")

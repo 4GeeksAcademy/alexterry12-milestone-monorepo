@@ -7,6 +7,7 @@ dependencies = [
     "incident-analysis",
     "pydantic>=2.13.4",
     "python-multipart>=0.0.32",
+    "shared",
     "tinydb>=4.9.0",
     "uvicorn>=0.52.1",
 ]
@@ -24,3 +25,4 @@ py-modules = ["seed"]
 
 [tool.uv.sources]
 incident-analysis = { path = "../../packages/incident_analysis", editable = true }
+shared = { path = "../../packages/shared", editable = true }

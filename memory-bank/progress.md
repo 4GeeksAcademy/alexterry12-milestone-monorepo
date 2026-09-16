@@ -15,8 +15,7 @@
 - Removed root `node_modules` from all git history; added standard Node `.gitignore` (GitHub Node.gitignore)
 
 ## In progress
-- Final commit, PR, and submission (commit `.gitignore` + force-push rewritten history)
+- Centralized Incident Manager complete path: models/seed/router/UI; rules consolidated in `packages/shared/incident_rules.py` (single source of truth, editable via api pyproject).
 
 ## Next
-- Commit root `.gitignore`, then force-push rewritten branches to origin
-- (nothing else — milestone complete once submitted)
+- Final commit, PR, and submission
