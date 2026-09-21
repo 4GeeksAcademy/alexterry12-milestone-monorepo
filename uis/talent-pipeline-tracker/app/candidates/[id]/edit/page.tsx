@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { getCandidate, updateCandidate } from "@/lib/api";
@@ -32,37 +32,39 @@ export default function EditCandidatePage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  useEffect(() => {
+  const loadCandidate = useCallback(async () => {
     if (!id) {
       setLoadError("Candidate not found");
       setLoading(false);
       return;
     }
 
-    const candidateId = id;
+    setLoading(true);
+    setLoadError(null);
 
-    async function loadCandidate() {
-      try {
-        setLoadError(null);
-        const candidate = await getCandidate(candidateId);
-        setFullName(candidate.full_name);
-        setEmail(candidate.email);
-        setPhone(candidate.phone);
-        setPosition(candidate.position);
-        setLinkedinUrl(candidate.linkedin_url ?? "");
-        setCvUrl(candidate.cv_url ?? "");
-        setExperienceYears(String(candidate.experience_years));
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Candidate not found";
-        setLoadError(message);
-      } finally {
-        setLoading(false);
-      }
+    try {
+      const candidate = await getCandidate(id);
+      setFullName(candidate.full_name ?? "");
+      setEmail(candidate.email ?? "");
+      setPhone(candidate.phone ?? "");
+      setPosition(candidate.position ?? "");
+      setLinkedinUrl(candidate.linkedin_url ?? "");
+      setCvUrl(candidate.cv_url ?? "");
+      setExperienceYears(String(candidate.experience_years ?? 0));
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Could not load this candidate. Please try again.";
+      setLoadError(message);
+    } finally {
+      setLoading(false);
     }
-
-    loadCandidate();
   }, [id]);
+
+  useEffect(() => {
+    void loadCandidate();
+  }, [loadCandidate]);
 
   useEffect(() => {
     if (!submitSuccess || !id) {
@@ -94,8 +96,8 @@ export default function EditCandidatePage() {
     return errors;
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit(event?: React.FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
 
     if (!id) {
       return;
@@ -129,7 +131,7 @@ export default function EditCandidatePage() {
       const message =
         err instanceof Error
           ? err.message
-          : "Failed to update candidate, please try again";
+          : "Could not save the changes. Please try again.";
       setSubmitError(message);
     } finally {
       setSubmitting(false);
@@ -174,6 +176,21 @@ export default function EditCandidatePage() {
           >
             <p className="font-medium">Unable to load candidate</p>
             <p className="mt-1 text-sm text-red-700">{loadError}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={() => void loadCandidate()}
+                className="rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-800 transition-colors hover:bg-red-100"
+              >
+                Try again
+              </button>
+              <Link
+                href="/"
+                className="text-sm font-medium text-red-800 underline hover:no-underline"
+              >
+                Back to candidates
+              </Link>
+            </div>
           </div>
         )}
 
@@ -188,16 +205,35 @@ export default function EditCandidatePage() {
               </div>
             )}
 
-            {submitError && (
+            {submitError && !submitting && (
               <div
                 className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
                 role="alert"
               >
-                {submitError}
+                <p>{submitError}</p>
+                <div className="mt-3 flex flex-wrap items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => void handleSubmit()}
+                    className="rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-800 transition-colors hover:bg-red-100"
+                  >
+                    Try again
+                  </button>
+                  <Link
+                    href="/"
+                    className="text-sm font-medium text-red-800 underline hover:no-underline"
+                  >
+                    Back to candidates
+                  </Link>
+                </div>
               </div>
             )}
 
-            <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+            <form
+              className="space-y-4"
+              onSubmit={(event) => void handleSubmit(event)}
+              noValidate
+            >
               <div>
                 <label
                   htmlFor="full_name"

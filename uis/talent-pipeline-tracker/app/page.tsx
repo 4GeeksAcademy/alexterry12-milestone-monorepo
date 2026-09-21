@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getCandidates } from "@/lib/api";
@@ -59,8 +59,8 @@ export default function CandidateListPage() {
       }
 
       if (query) {
-        const nameMatch = candidate.full_name.toLowerCase().includes(query);
-        const emailMatch = candidate.email.toLowerCase().includes(query);
+        const nameMatch = candidate.full_name?.toLowerCase().includes(query);
+        const emailMatch = candidate.email?.toLowerCase().includes(query);
         if (!nameMatch && !emailMatch) {
           return false;
         }
@@ -72,25 +72,27 @@ export default function CandidateListPage() {
 
   const hasActiveFilters = Boolean(statusFilter || stageFilter || qParam.trim());
 
-  useEffect(() => {
-    async function loadCandidates() {
-      try {
-        setError(null);
-        const data = await getCandidates();
-        setCandidates(data);
-      } catch (err) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Something went wrong while loading candidates.";
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    }
+  const loadCandidates = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-    loadCandidates();
+    try {
+      const data = await getCandidates();
+      setCandidates(data);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while loading candidates.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadCandidates();
+  }, [loadCandidates]);
 
   return (
     <div className="min-h-full bg-zinc-50 px-4 py-8 sm:px-6 lg:px-8">
@@ -134,6 +136,21 @@ export default function CandidateListPage() {
           >
             <p className="font-medium">Unable to load candidates</p>
             <p className="mt-1 text-sm text-red-700">{error}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={() => void loadCandidates()}
+                className="rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-800 transition-colors hover:bg-red-100"
+              >
+                Try again
+              </button>
+              <Link
+                href="/candidates/new"
+                className="text-sm font-medium text-red-800 underline hover:no-underline"
+              >
+                Register a candidate instead
+              </Link>
+            </div>
           </div>
         )}
 
@@ -237,17 +254,17 @@ export default function CandidateListPage() {
                               href={`/candidates/${candidate.id}`}
                               className="font-medium text-blue-700 hover:text-blue-900 hover:underline"
                             >
-                              {candidate.full_name}
+                              {candidate.full_name ?? "—"}
                             </Link>
                           </td>
                           <td className="px-4 py-3 text-zinc-700">
-                            {candidate.position}
+                            {candidate.position ?? "—"}
                           </td>
                           <td className="px-4 py-3 text-zinc-700">
-                            {statusLabels[candidate.status]}
+                            {statusLabels[candidate.status] ?? "—"}
                           </td>
                           <td className="px-4 py-3 text-zinc-700">
-                            {stageLabels[candidate.stage]}
+                            {stageLabels[candidate.stage] ?? "—"}
                           </td>
                         </tr>
                       ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
   VALID_CATEGORIES,
@@ -45,6 +46,37 @@ function StatusBadge({ status }: { status: SupplierStatus }) {
   );
 }
 
+function ErrorPanel({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div
+      className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+      role="alert"
+    >
+      <p>{message}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-4">
+        {onRetry ? (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="rounded-md border border-red-300 bg-surface px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100"
+          >
+            Try again
+          </button>
+        ) : null}
+        <Link href="/" className="text-sm font-medium text-red-800 underline">
+          Back to home
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 const emptyForm: SupplierCreatePayload = {
   name: "",
   country: "USA",
@@ -62,7 +94,13 @@ export default function SuppliersPage() {
   const [countryFilter, setCountryFilter] = useState<string>("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [failedAction, setFailedAction] = useState<
+    | { kind: "rate"; supplierId: number; value: number }
+    | { kind: "status"; supplierId: number; next: SupplierStatus }
+    | null
+  >(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [form, setForm] = useState<SupplierCreatePayload>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
@@ -71,7 +109,9 @@ export default function SuppliersPage() {
 
   const loadSuppliers = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setListError(null);
+    setActionError(null);
+    setFailedAction(null);
     try {
       const data = await listSuppliers({
         country: countryFilter || undefined,
@@ -84,7 +124,11 @@ export default function SuppliersPage() {
       }
       setRateDrafts(drafts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load suppliers.");
+      setListError(
+        err instanceof Error
+          ? err.message
+          : "Could not load suppliers. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -112,8 +156,8 @@ export default function SuppliersPage() {
     });
   };
 
-  const onCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onCreate = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setFormError(null);
     setSubmitting(true);
     try {
@@ -132,21 +176,26 @@ export default function SuppliersPage() {
       });
       await loadSuppliers();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Create failed.");
+      setFormError(
+        err instanceof Error
+          ? err.message
+          : "Could not register the supplier. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  const onSaveRate = async (supplier: Supplier) => {
-    const raw = rateDrafts[supplier.id];
-    const value = Number(raw);
+  const onSaveRate = async (supplier: Supplier, override?: number) => {
+    const value = override ?? Number(rateDrafts[supplier.id]);
     if (!Number.isFinite(value) || value <= 0) {
-      setError("Rate must be a number greater than zero.");
+      setActionError("Rate must be a number greater than zero.");
+      setFailedAction(null);
       return;
     }
     setRowBusy((prev) => ({ ...prev, [supplier.id]: true }));
-    setError(null);
+    setActionError(null);
+    setFailedAction(null);
     try {
       const updated = await updateSupplierRate(supplier.id, value);
       setSuppliers((prev) =>
@@ -157,7 +206,12 @@ export default function SuppliersPage() {
         [updated.id]: String(updated.rate_per_shipment),
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Rate update failed.");
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : "Could not update the rate. Please try again.",
+      );
+      setFailedAction({ kind: "rate", supplierId: supplier.id, value });
       setRateDrafts((prev) => ({
         ...prev,
         [supplier.id]: String(supplier.rate_per_shipment),
@@ -167,20 +221,43 @@ export default function SuppliersPage() {
     }
   };
 
-  const onToggleStatus = async (supplier: Supplier) => {
+  const onToggleStatus = async (
+    supplier: Supplier,
+    override?: SupplierStatus,
+  ) => {
     const next: SupplierStatus =
-      supplier.status === "active" ? "suspended" : "active";
+      override ?? (supplier.status === "active" ? "suspended" : "active");
     setRowBusy((prev) => ({ ...prev, [supplier.id]: true }));
-    setError(null);
+    setActionError(null);
+    setFailedAction(null);
     try {
       const updated = await updateSupplierStatus(supplier.id, next);
       setSuppliers((prev) =>
         prev.map((s) => (s.id === updated.id ? updated : s)),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Status update failed.");
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : "Could not update the status. Please try again.",
+      );
+      setFailedAction({ kind: "status", supplierId: supplier.id, next });
     } finally {
       setRowBusy((prev) => ({ ...prev, [supplier.id]: false }));
+    }
+  };
+
+  const retryFailedAction = () => {
+    if (!failedAction) return;
+    const supplier = suppliers.find((s) => s.id === failedAction.supplierId);
+    if (!supplier) {
+      void loadSuppliers();
+      return;
+    }
+    if (failedAction.kind === "rate") {
+      void onSaveRate(supplier, failedAction.value);
+    } else {
+      void onToggleStatus(supplier, failedAction.next);
     }
   };
 
@@ -231,18 +308,21 @@ export default function SuppliersPage() {
         </div>
       </Section>
 
-      {error ? (
-        <p
-          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
-          role="alert"
-        >
-          {error}
-        </p>
+      {actionError ? (
+        <ErrorPanel
+          message={actionError}
+          onRetry={failedAction ? retryFailedAction : undefined}
+        />
       ) : null}
 
       <Section title="Directory">
         {loading ? (
           <p className="font-mono text-sm text-muted">Loading…</p>
+        ) : listError ? (
+          <ErrorPanel
+            message={listError}
+            onRetry={() => void loadSuppliers()}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-left text-sm">
@@ -265,14 +345,14 @@ export default function SuppliersPage() {
                       className="border-b border-line/70 align-top last:border-0"
                     >
                       <td className="px-2 py-3 font-medium text-ink">
-                        {supplier.name}
+                        {supplier.name ?? "—"}
                       </td>
                       <td className="px-2 py-3 font-mono text-muted">
-                        {supplier.country}
+                        {supplier.country ?? "—"}
                       </td>
                       <td className="px-2 py-3">
                         <div className="flex flex-wrap gap-1">
-                          {supplier.categories.map((cat) => (
+                          {(supplier.categories ?? []).map((cat) => (
                             <span
                               key={cat}
                               className="rounded bg-canvas px-1.5 py-0.5 font-mono text-xs text-ink"
@@ -305,7 +385,7 @@ export default function SuppliersPage() {
                             className="w-24 rounded-md border border-line bg-canvas px-2 py-1 font-mono text-sm"
                           />
                           <span className="font-mono text-xs text-muted">
-                            {supplier.currency}
+                            {supplier.currency ?? "—"}
                           </span>
                           <button
                             type="button"
@@ -481,13 +561,11 @@ export default function SuppliersPage() {
             </label>
           </div>
 
-          {formError ? (
-            <p
-              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
-              role="alert"
-            >
-              {formError}
-            </p>
+          {formError && !submitting ? (
+            <ErrorPanel
+              message={formError}
+              onRetry={() => void onCreate()}
+            />
           ) : null}
 
           <button

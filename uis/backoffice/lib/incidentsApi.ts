@@ -39,10 +39,43 @@ function getBaseUrl(): string {
   return baseUrl.replace(/\/$/, "");
 }
 
-async function readErrorDetail(
-  response: Response,
-  fallback: string,
-): Promise<string> {
+const NETWORK_ERROR_MESSAGE =
+  "Could not reach the server. Check your connection and try again.";
+
+/**
+ * The analyzer's own validation messages, which are written for end users and
+ * are safe to show verbatim. Anything else is replaced by a fixed message.
+ */
+const ALLOWED_ANALYZE_DETAIL_PREFIXES = [
+  "Missing required columns",
+  "Not a CSV file",
+  "Empty file",
+] as const;
+
+/** fetch that never lets the browser's raw "Failed to fetch" text reach the UI. */
+async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch {
+    throw new Error(NETWORK_ERROR_MESSAGE);
+  }
+}
+
+function messageForStatus(status: number): string {
+  if (status === 400 || status === 422) {
+    return "That file could not be processed. Check it is a valid incidents CSV and try again.";
+  }
+  if (status === 404) {
+    return "That resource is no longer available. Please try again.";
+  }
+  if (status >= 500) {
+    return "The server had a problem handling this file. Please try again in a moment.";
+  }
+  return "Something went wrong. Please try again.";
+}
+
+/** Returns the response's string `detail`, or null when there is none. */
+async function readDetailString(response: Response): Promise<string | null> {
   try {
     const body: unknown = await response.json();
     if (
@@ -51,12 +84,16 @@ async function readErrorDetail(
       "detail" in body &&
       typeof (body as { detail: unknown }).detail === "string"
     ) {
-      return (body as { detail: string }).detail;
+      return (body as { detail: string }).detail.trim();
     }
   } catch {
-    // ignore parse errors
+    if (process.env.NODE_ENV !== "production") {
+      console.error(
+        `[incidentsApi] Error response was not JSON (status ${response.status}).`,
+      );
+    }
   }
-  return fallback;
+  return null;
 }
 
 export async function analyzeIncidents(
@@ -65,32 +102,37 @@ export async function analyzeIncidents(
   const form = new FormData();
   form.append("file", file);
 
-  const response = await fetch(`${getBaseUrl()}/api/incidents/analyze`, {
+  const response = await apiFetch(`${getBaseUrl()}/api/incidents/analyze`, {
     method: "POST",
     body: form,
   });
 
   if (!response.ok) {
-    throw new Error(
-      await readErrorDetail(
-        response,
-        `Analyze failed (${response.status} ${response.statusText})`,
-      ),
-    );
+    const detail =
+      response.status === 400 ? await readDetailString(response) : null;
+    const allowed =
+      detail !== null &&
+      detail.length > 0 &&
+      !detail.includes("Malformed CSV") &&
+      ALLOWED_ANALYZE_DETAIL_PREFIXES.some((prefix) =>
+        detail.startsWith(prefix),
+      );
+    throw new Error(allowed ? detail : messageForStatus(response.status));
   }
 
   return (await response.json()) as IncidentAnalysisSummary;
 }
 
 export async function downloadResultsExport(): Promise<void> {
-  const response = await fetch(`${getBaseUrl()}/api/incidents/results/export`);
+  const response = await apiFetch(
+    `${getBaseUrl()}/api/incidents/results/export`,
+  );
 
   if (!response.ok) {
     throw new Error(
-      await readErrorDetail(
-        response,
-        `Export failed (${response.status} ${response.statusText})`,
-      ),
+      response.status === 404
+        ? "No results are available to download yet. Analyze a CSV first."
+        : messageForStatus(response.status),
     );
   }
 

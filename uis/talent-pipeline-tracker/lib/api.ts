@@ -20,43 +20,61 @@ function getBaseUrl(): string {
   return baseUrl.replace(/\/$/, "");
 }
 
-async function parseErrorMessage(
+const NETWORK_ERROR_MESSAGE =
+  "Could not reach the server. Check your connection and try again.";
+
+/**
+ * Fixed, user-facing message for a failed response. Server text is never shown:
+ * it can leak internals and is not written for the people using this screen.
+ */
+async function errorMessage(
   response: Response,
   fallback: string,
 ): Promise<string> {
+  // Drain the body so a non-JSON error surfaces in dev logs, not in the UI.
   try {
-    const body: unknown = await response.json();
-
-    if (
-      body &&
-      typeof body === "object" &&
-      "detail" in body &&
-      body.detail !== undefined
-    ) {
-      return `${fallback}: ${JSON.stringify(body.detail)}`;
-    }
+    await response.json();
   } catch {
-    // Response body is not JSON; use the fallback message.
+    if (process.env.NODE_ENV !== "production") {
+      console.error(
+        `[api] Error response was not JSON (status ${response.status}).`,
+      );
+    }
   }
 
-  return `${fallback} (HTTP ${response.status})`;
+  const { status } = response;
+  if (status === 400 || status === 422) {
+    return "Some of the details were not valid. Review the fields and try again.";
+  }
+  if (status === 404) {
+    return "We could not find what you were looking for. It may have been removed.";
+  }
+  if (status >= 500) {
+    return "The server had a problem with this request. Please try again in a moment.";
+  }
+  return fallback;
 }
 
 async function request<T>(
   path: string,
   init: RequestInit,
-  errorContext: string,
+  fallbackMessage: string,
 ): Promise<T> {
-  const response = await fetch(`${getBaseUrl()}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init.headers,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${getBaseUrl()}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...init.headers,
+      },
+    });
+  } catch {
+    throw new Error(NETWORK_ERROR_MESSAGE);
+  }
 
   if (!response.ok) {
-    throw new Error(await parseErrorMessage(response, errorContext));
+    throw new Error(await errorMessage(response, fallbackMessage));
   }
 
   if (response.status === 204) {
@@ -70,7 +88,7 @@ export async function getCandidates(): Promise<Candidate[]> {
   const payload = await request<RecordsListResponse>(
     "/records",
     { method: "GET" },
-    "Failed to fetch candidates",
+    "Could not load candidates. Please try again.",
   );
 
   return payload.data;
@@ -80,7 +98,7 @@ export async function getCandidate(id: string): Promise<Candidate> {
   return request<Candidate>(
     `/records/${id}`,
     { method: "GET" },
-    `Failed to fetch candidate ${id}`,
+    "Could not load this candidate. Please try again.",
   );
 }
 
@@ -103,7 +121,7 @@ export async function createCandidate(
       method: "POST",
       body: JSON.stringify(payload),
     },
-    "Failed to create candidate",
+    "Could not register the candidate. Please try again.",
   );
 }
 
@@ -129,7 +147,7 @@ export async function updateCandidate(
       method: "PUT",
       body: JSON.stringify(payload),
     },
-    `Failed to update candidate ${id}`,
+    "Could not save the changes. Please try again.",
   );
 }
 
@@ -143,7 +161,7 @@ export async function updateCandidateStatus(
       method: "PATCH",
       body: JSON.stringify({ status }),
     },
-    `Failed to update status for candidate ${id}`,
+    "Could not update the status. Please try again.",
   );
 }
 
@@ -157,7 +175,7 @@ export async function updateCandidateStage(
       method: "PATCH",
       body: JSON.stringify({ stage }),
     },
-    `Failed to update stage for candidate ${id}`,
+    "Could not update the stage. Please try again.",
   );
 }
 
@@ -165,7 +183,7 @@ export async function getNotes(candidateId: string): Promise<Note[]> {
   const payload = await request<NotesListResponse>(
     `/records/${candidateId}/notes`,
     { method: "GET" },
-    `Failed to fetch notes for candidate ${candidateId}`,
+    "Could not load notes. Please try again.",
   );
 
   return payload.data;
@@ -181,7 +199,7 @@ export async function addNote(
       method: "POST",
       body: JSON.stringify({ content }),
     },
-    `Failed to add note for candidate ${candidateId}`,
+    "Could not add the note. Please try again.",
   );
 }
 
@@ -192,6 +210,6 @@ export async function deleteNote(
   await request<void>(
     `/records/${candidateId}/notes/${noteId}`,
     { method: "DELETE" },
-    `Failed to delete note ${noteId} for candidate ${candidateId}`,
+    "Could not delete the note. Please try again.",
   );
 }

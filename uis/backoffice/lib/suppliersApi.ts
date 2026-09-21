@@ -55,36 +55,49 @@ function getBaseUrl(): string {
   return baseUrl.replace(/\/$/, "");
 }
 
-export async function readApiError(
-  response: Response,
-  fallback: string,
-): Promise<string> {
+const NETWORK_ERROR_MESSAGE =
+  "Could not reach the server. Check your connection and try again.";
+
+/** fetch that never lets the browser's raw "Failed to fetch" text reach the UI. */
+async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   try {
-    const body: unknown = await response.json();
-    if (!body || typeof body !== "object" || !("detail" in body)) {
-      return fallback;
-    }
-    const detail = (body as { detail: unknown }).detail;
-    if (typeof detail === "string") return detail;
-    if (Array.isArray(detail)) {
-      return detail
-        .map((item) => {
-          if (item && typeof item === "object" && "msg" in item) {
-            const loc =
-              "loc" in item && Array.isArray((item as { loc: unknown }).loc)
-                ? (item as { loc: unknown[] }).loc.join(".")
-                : "";
-            const msg = String((item as { msg: unknown }).msg);
-            return loc ? `${loc}: ${msg}` : msg;
-          }
-          return String(item);
-        })
-        .join("; ");
-    }
+    return await fetch(input, init);
   } catch {
-    // ignore
+    throw new Error(NETWORK_ERROR_MESSAGE);
   }
-  return fallback;
+}
+
+/**
+ * Fixed, user-facing message for a failed response. Server text is never shown:
+ * it can leak internals and is not written for the people using this screen.
+ */
+async function apiError(response: Response, fallback: string): Promise<Error> {
+  // Drain the body so a non-JSON error surfaces in dev logs, not in the UI.
+  try {
+    await response.json();
+  } catch {
+    if (process.env.NODE_ENV !== "production") {
+      console.error(
+        `[suppliersApi] Error response was not JSON (status ${response.status}).`,
+      );
+    }
+  }
+
+  const { status } = response;
+  if (status === 400 || status === 422) {
+    return new Error(
+      "Some of the details were not valid. Review the fields and try again.",
+    );
+  }
+  if (status === 404) {
+    return new Error("That supplier could not be found. Refresh and try again.");
+  }
+  if (status >= 500) {
+    return new Error(
+      "The server had a problem with this request. Please try again in a moment.",
+    );
+  }
+  return new Error(fallback);
 }
 
 export async function listSuppliers(filters?: {
@@ -96,10 +109,11 @@ export async function listSuppliers(filters?: {
   if (filters?.category) params.set("category", filters.category);
   const qs = params.toString();
   const url = `${getBaseUrl()}/api/suppliers/${qs ? `?${qs}` : ""}`;
-  const response = await fetch(url);
+  const response = await apiFetch(url);
   if (!response.ok) {
-    throw new Error(
-      await readApiError(response, `List failed (${response.status})`),
+    throw await apiError(
+      response,
+      "Could not load suppliers. Please try again.",
     );
   }
   return (await response.json()) as Supplier[];
@@ -108,14 +122,15 @@ export async function listSuppliers(filters?: {
 export async function createSupplier(
   payload: SupplierCreatePayload,
 ): Promise<Supplier> {
-  const response = await fetch(`${getBaseUrl()}/api/suppliers/`, {
+  const response = await apiFetch(`${getBaseUrl()}/api/suppliers/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
-    throw new Error(
-      await readApiError(response, `Create failed (${response.status})`),
+    throw await apiError(
+      response,
+      "Could not register the supplier. Please try again.",
     );
   }
   return (await response.json()) as Supplier;
@@ -125,15 +140,13 @@ export async function updateSupplierRate(
   id: number,
   rate_per_shipment: number,
 ): Promise<Supplier> {
-  const response = await fetch(`${getBaseUrl()}/api/suppliers/${id}/rate`, {
+  const response = await apiFetch(`${getBaseUrl()}/api/suppliers/${id}/rate`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ rate_per_shipment }),
   });
   if (!response.ok) {
-    throw new Error(
-      await readApiError(response, `Rate update failed (${response.status})`),
-    );
+    throw await apiError(response, "Could not update the rate. Please try again.");
   }
   return (await response.json()) as Supplier;
 }
@@ -142,14 +155,15 @@ export async function updateSupplierStatus(
   id: number,
   status: SupplierStatus,
 ): Promise<Supplier> {
-  const response = await fetch(`${getBaseUrl()}/api/suppliers/${id}/status`, {
+  const response = await apiFetch(`${getBaseUrl()}/api/suppliers/${id}/status`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
   });
   if (!response.ok) {
-    throw new Error(
-      await readApiError(response, `Status update failed (${response.status})`),
+    throw await apiError(
+      response,
+      "Could not update the status. Please try again.",
     );
   }
   return (await response.json()) as Supplier;

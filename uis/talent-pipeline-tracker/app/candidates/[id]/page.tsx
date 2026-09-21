@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -162,56 +162,60 @@ export default function CandidateDetailPage() {
     }
   }
 
-  useEffect(() => {
+  const loadCandidate = useCallback(async () => {
     if (!id) {
       setError("Candidate not found");
       setLoading(false);
       return;
     }
 
-    const candidateId = id;
+    setLoading(true);
+    setError(null);
 
-    async function loadCandidate() {
-      try {
-        setError(null);
-        const data = await getCandidate(candidateId);
-        setCandidate(data);
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Candidate not found";
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
+    try {
+      const data = await getCandidate(id);
+      setCandidate(data);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Could not load this candidate. Please try again.";
+      setError(message);
+    } finally {
+      setLoading(false);
     }
-
-    loadCandidate();
   }, [id]);
 
-  useEffect(() => {
+  const loadNotes = useCallback(async () => {
     if (!id) {
       setNotesLoading(false);
       return;
     }
 
-    const candidateId = id;
+    setNotesLoading(true);
+    setNotesError(null);
 
-    async function loadNotes() {
-      try {
-        setNotesError(null);
-        const data = await getNotes(candidateId);
-        setNotes(data);
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to load notes";
-        setNotesError(message);
-      } finally {
-        setNotesLoading(false);
-      }
+    try {
+      const data = await getNotes(id);
+      setNotes(data);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Could not load notes. Please try again.";
+      setNotesError(message);
+    } finally {
+      setNotesLoading(false);
     }
-
-    loadNotes();
   }, [id]);
+
+  useEffect(() => {
+    void loadCandidate();
+  }, [loadCandidate]);
+
+  useEffect(() => {
+    void loadNotes();
+  }, [loadNotes]);
 
   return (
     <div className="min-h-full bg-zinc-50 px-4 py-8 sm:px-6 lg:px-8">
@@ -240,6 +244,21 @@ export default function CandidateDetailPage() {
           >
             <p className="font-medium">Unable to load candidate</p>
             <p className="mt-1 text-sm text-red-700">{error}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={() => void loadCandidate()}
+                className="rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-800 transition-colors hover:bg-red-100"
+              >
+                Try again
+              </button>
+              <Link
+                href="/"
+                className="text-sm font-medium text-red-800 underline hover:no-underline"
+              >
+                Back to candidates
+              </Link>
+            </div>
           </div>
         )}
 
@@ -252,9 +271,11 @@ export default function CandidateDetailPage() {
                     Executive Assistant Candidate — TrackFlow Zaragoza
                   </p>
                   <h1 className="mt-1 text-2xl font-semibold text-zinc-900">
-                    {candidate.full_name}
+                    {candidate.full_name ?? "—"}
                   </h1>
-                  <p className="mt-1 text-zinc-600">{candidate.position}</p>
+                  <p className="mt-1 text-zinc-600">
+                    {candidate.position ?? "—"}
+                  </p>
                 </div>
                 <Link
                   href={`/candidates/${candidate.id}/edit`}
@@ -269,26 +290,30 @@ export default function CandidateDetailPage() {
               <div className="grid gap-1 py-4 sm:grid-cols-3">
                 <dt className="text-sm font-medium text-zinc-500">Email</dt>
                 <dd className="text-sm text-zinc-900 sm:col-span-2">
-                  <a
-                    href={`mailto:${candidate.email}`}
-                    className="text-blue-700 hover:text-blue-900 hover:underline"
-                  >
-                    {candidate.email}
-                  </a>
+                  {candidate.email ? (
+                    <a
+                      href={`mailto:${candidate.email}`}
+                      className="text-blue-700 hover:text-blue-900 hover:underline"
+                    >
+                      {candidate.email}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
                 </dd>
               </div>
 
               <div className="grid gap-1 py-4 sm:grid-cols-3">
                 <dt className="text-sm font-medium text-zinc-500">Phone</dt>
                 <dd className="text-sm text-zinc-900 sm:col-span-2">
-                  {candidate.phone}
+                  {candidate.phone ?? "—"}
                 </dd>
               </div>
 
               <div className="grid gap-1 py-4 sm:grid-cols-3">
                 <dt className="text-sm font-medium text-zinc-500">Position</dt>
                 <dd className="text-sm text-zinc-900 sm:col-span-2">
-                  {candidate.position}
+                  {candidate.position ?? "—"}
                 </dd>
               </div>
 
@@ -333,7 +358,7 @@ export default function CandidateDetailPage() {
                   Years of experience
                 </dt>
                 <dd className="text-sm text-zinc-900 sm:col-span-2">
-                  {candidate.experience_years}
+                  {candidate.experience_years ?? "—"}
                 </dd>
               </div>
 
@@ -416,7 +441,7 @@ export default function CandidateDetailPage() {
                   Application date
                 </dt>
                 <dd className="text-sm text-zinc-900 sm:col-span-2">
-                  {formatDate(candidate.applied_at)}
+                  {candidate.applied_at ? formatDate(candidate.applied_at) : "—"}
                 </dd>
               </div>
             </dl>
@@ -429,9 +454,16 @@ export default function CandidateDetailPage() {
               )}
 
               {!notesLoading && notesError && (
-                <p className="mt-4 text-sm text-red-600" role="alert">
-                  {notesError}
-                </p>
+                <div className="mt-4" role="alert">
+                  <p className="text-sm text-red-600">{notesError}</p>
+                  <button
+                    type="button"
+                    onClick={() => void loadNotes()}
+                    className="mt-2 rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-800 transition-colors hover:bg-red-100"
+                  >
+                    Try again
+                  </button>
+                </div>
               )}
 
               {!notesLoading && !notesError && (
@@ -450,7 +482,9 @@ export default function CandidateDetailPage() {
                               {note.content}
                             </p>
                             <p className="mt-2 text-xs text-zinc-500">
-                              {formatDate(note.created_at)}
+                              {note.created_at
+                                ? formatDate(note.created_at)
+                                : "—"}
                             </p>
                           </div>
                           <div className="flex shrink-0 flex-col items-end gap-1">
