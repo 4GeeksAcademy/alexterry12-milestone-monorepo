@@ -48,6 +48,7 @@ const NETWORK_ERROR_MESSAGE =
  */
 const ALLOWED_ANALYZE_DETAIL_PREFIXES = [
   "Missing required columns",
+  "The file is missing a header row",
   "Not a CSV file",
   "Empty file",
 ] as const;

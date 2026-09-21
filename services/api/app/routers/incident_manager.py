@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from typing import Any
 
@@ -19,7 +20,21 @@ from app.models import (
     IncidentStatus,
 )
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/incidents", tags=["incident-manager"])
+
+# Fixed client-facing message for store failures. Details go to the log only.
+_STORE_ERROR = "An unexpected error occurred. Please try again."
+
+
+def _store_error(operation: str) -> HTTPException:
+    """Log the real store failure (call from an except block) and return a 500."""
+    logger.exception("Incident store operation failed: %s", operation)
+    return HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail=_STORE_ERROR,
+    )
 
 
 class StatusUpdate(BaseModel):
@@ -38,7 +53,11 @@ def _with_id(doc_id: int, doc: dict[str, Any]) -> dict[str, Any]:
 
 
 def _get_or_404(incident_id: int) -> tuple[int, dict[str, Any]]:
-    doc = incidents_table.get(doc_id=incident_id)
+    try:
+        doc = incidents_table.get(doc_id=incident_id)
+    except (OSError, ValueError) as exc:
+        raise _store_error("read incident") from exc
+
     if doc is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -89,8 +108,12 @@ def create_incident(payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
     record = create.model_dump()
     record["created_at"] = now
     record["updated_at"] = now
-    doc_id = incidents_table.insert(record)
-    stored = incidents_table.get(doc_id=doc_id)
+    try:
+        doc_id = incidents_table.insert(record)
+        stored = incidents_table.get(doc_id=doc_id)
+    except (OSError, ValueError) as exc:
+        raise _store_error("insert incident") from exc
+
     return _with_id(doc_id, dict(stored) if stored else record)
 
 
@@ -101,8 +124,13 @@ def list_incidents(
     branch: str | None = Query(default=None),
     category: str | None = Query(default=None),
 ) -> list[dict[str, Any]]:
+    try:
+        docs = incidents_table.all()
+    except (OSError, ValueError) as exc:
+        raise _store_error("list incidents") from exc
+
     results: list[dict[str, Any]] = []
-    for doc in incidents_table.all():
+    for doc in docs:
         item = dict(doc)
         if status_filter is not None and item.get("status") != status_filter:
             continue
@@ -123,8 +151,13 @@ def incidents_summary() -> dict[str, Any]:
     by_origin = {key: 0 for key in VALID_INCIDENT_ORIGINS}
     by_branch = {key: 0 for key in VALID_INCIDENT_BRANCHES}
 
+    try:
+        docs = incidents_table.all()
+    except (OSError, ValueError) as exc:
+        raise _store_error("summarize incidents") from exc
+
     total = 0
-    for doc in incidents_table.all():
+    for doc in docs:
         total += 1
         item = dict(doc)
         status_value = item.get("status")
@@ -175,12 +208,16 @@ def update_incident_status(
             },
         )
 
-    incidents_table.update(
-        {
-            "status": requested,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        },
-        doc_ids=[incident_id],
-    )
+    try:
+        incidents_table.update(
+            {
+                "status": requested,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            },
+            doc_ids=[incident_id],
+        )
+    except (OSError, ValueError) as exc:
+        raise _store_error("update incident status") from exc
+
     _, updated = _get_or_404(incident_id)
     return _with_id(incident_id, updated)

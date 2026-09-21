@@ -1,12 +1,21 @@
 """TrackFlow centralized company API — incident analysis (Phase 2)."""
 
+import logging
 import os
 
 from fastapi import FastAPI, Request
+from fastapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.routers import incident_manager, incidents, suppliers
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="TrackFlow Company API",
@@ -43,9 +52,22 @@ app.include_router(suppliers.router)
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(
-    _request: Request,
-    _exc: Exception,
-) -> JSONResponse:
+    request: Request,
+    exc: Exception,
+) -> Response:
+    """Record the real error server-side; send the client a generic body."""
+    # Expected outcomes: hand them back to FastAPI's own handlers unchanged.
+    if isinstance(exc, StarletteHTTPException):
+        return await http_exception_handler(request, exc)
+    if isinstance(exc, RequestValidationError):
+        return await request_validation_exception_handler(request, exc)
+
+    # Path only — a query string can carry request data.
+    logger.exception(
+        "Unhandled error while handling %s %s",
+        request.method,
+        request.url.path,
+    )
     return JSONResponse(
         status_code=500,
         content={"detail": "An unexpected error occurred."},

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import logging
 import tempfile
 from pathlib import Path
 
@@ -24,7 +25,15 @@ from incident_analysis import (
 
 from app import state
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
+
+# Fixed client-facing messages. Real parser/OS errors go to the log, never here.
+_CSV_UNREADABLE = "Could not read the CSV file. Check the file format and try again."
+_NOT_UTF8 = "Malformed file: could not decode as UTF-8 CSV."
+_UPLOAD_FAILED = "Could not process the uploaded file. Please try again."
+_UNEXPECTED = "An unexpected error occurred."
 
 
 def _looks_like_csv(filename: str | None, content_type: str | None) -> bool:
@@ -44,17 +53,14 @@ def _validate_headers(path: Path) -> None:
         if reader.fieldnames is None:
             raise HTTPException(
                 status_code=400,
-                detail="Malformed CSV: missing header row.",
+                detail="The file is missing a header row.",
             )
         headers = {h.strip() for h in reader.fieldnames if h is not None}
         missing = REQUIRED_CSV_COLUMNS - headers
         if missing:
             raise HTTPException(
-                status_code=422,
-                detail=(
-                    "Malformed CSV: missing required columns: "
-                    + ", ".join(sorted(missing))
-                ),
+                status_code=400,
+                detail="Missing required columns: " + ", ".join(sorted(missing)),
             )
 
 
@@ -103,39 +109,49 @@ async def analyze_incidents(file: UploadFile = File(...)) -> dict:
 
     tmp_path: Path | None = None
     try:
-        with tempfile.NamedTemporaryFile(
-            mode="wb",
-            suffix=".csv",
-            delete=False,
-        ) as tmp:
-            tmp.write(raw)
-            tmp_path = Path(tmp.name)
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="wb",
+                suffix=".csv",
+                delete=False,
+            ) as tmp:
+                tmp.write(raw)
+                tmp_path = Path(tmp.name)
+        except OSError as exc:
+            logger.exception(
+                "Could not buffer upload %r to a temporary file", file.filename
+            )
+            raise HTTPException(status_code=500, detail=_UPLOAD_FAILED) from exc
 
         try:
             _validate_headers(tmp_path)
         except UnicodeDecodeError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail="Malformed file: could not decode as UTF-8 CSV.",
-            ) from exc
+            logger.warning(
+                "Upload %r is not valid UTF-8", file.filename, exc_info=True
+            )
+            raise HTTPException(status_code=400, detail=_NOT_UTF8) from exc
         except csv.Error as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Malformed CSV: {exc}",
-            ) from exc
+            logger.exception("CSV header parsing failed for upload %r", file.filename)
+            raise HTTPException(status_code=400, detail=_CSV_UNREADABLE) from exc
+        except OSError as exc:
+            logger.exception(
+                "Could not read the buffered copy of upload %r", file.filename
+            )
+            raise HTTPException(status_code=500, detail=_UPLOAD_FAILED) from exc
 
         try:
             data = analyze(tmp_path)
         except csv.Error as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Malformed CSV while reading records: {exc}",
-            ) from exc
+            logger.exception("CSV record parsing failed for upload %r", file.filename)
+            raise HTTPException(status_code=400, detail=_CSV_UNREADABLE) from exc
         except UnicodeDecodeError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail="Malformed file: could not decode as UTF-8 CSV.",
-            ) from exc
+            logger.warning(
+                "Upload %r is not valid UTF-8", file.filename, exc_info=True
+            )
+            raise HTTPException(status_code=400, detail=_NOT_UTF8) from exc
+        except (ValueError, KeyError, OSError) as exc:
+            logger.exception("Analysis failed for upload %r", file.filename)
+            raise HTTPException(status_code=500, detail=_UNEXPECTED) from exc
 
         # Use the client filename in the summary, not the temp path name
         data["source"] = Path(file.filename or "upload.csv").name
@@ -143,7 +159,13 @@ async def analyze_incidents(file: UploadFile = File(...)) -> dict:
         return _summary_payload(data)
     finally:
         if tmp_path is not None:
-            tmp_path.unlink(missing_ok=True)
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except OSError:
+                # Cleanup trouble must not replace the response already prepared.
+                logger.warning(
+                    "Could not delete temporary file %s", tmp_path, exc_info=True
+                )
 
 
 @router.get("/results/export")
@@ -156,7 +178,12 @@ def export_results() -> Response:
             detail="No analysis available. POST /api/incidents/analyze first.",
         )
 
-    body = results_csv_text(data)
+    try:
+        body = results_csv_text(data)
+    except (KeyError, ValueError) as exc:
+        logger.exception("Could not render the results CSV from the stored analysis")
+        raise HTTPException(status_code=500, detail=_UNEXPECTED) from exc
+
     return Response(
         content=body,
         media_type="text/csv; charset=utf-8",
