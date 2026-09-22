@@ -2,12 +2,22 @@
 
 from __future__ import annotations
 
+import sys
 from datetime import datetime, timezone
 
+from pydantic import ValidationError
 from tinydb import Query
 
-from app.database import suppliers_table
 from app.models import SupplierCreate
+
+DB_ERROR = (
+    "Error: could not open the supplier database. Check that "
+    "services/api/suppliers.json exists and contains valid JSON."
+)
+DB_WRITE_ERROR = (
+    "Error: could not write to the supplier database. Check that "
+    "services/api/suppliers.json is writable and contains valid JSON."
+)
 
 SUPPLIERS_SEED = [
     {
@@ -170,22 +180,53 @@ SUPPLIERS_SEED = [
 ]
 
 
-def main() -> None:
+def main() -> int:
+    # Imported here rather than at module scope so a store that cannot be opened
+    # is reported as a message instead of an import-time traceback.
+    try:
+        from app.database import suppliers_table
+    except RuntimeError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    except (OSError, ValueError):
+        print(DB_ERROR, file=sys.stderr)
+        return 1
+
+    # Validate every entry before the first insert, so bad seed data cannot
+    # leave the table half-written.
+    suppliers: list[SupplierCreate] = []
+    for index, raw in enumerate(SUPPLIERS_SEED, start=1):
+        try:
+            suppliers.append(SupplierCreate.model_validate(raw))
+        except ValidationError:
+            label = raw.get("name") or f"entry {index}"
+            print(
+                f"Error: seed data for {label!r} is not a valid supplier. "
+                "Fix SUPPLIERS_SEED and run again.",
+                file=sys.stderr,
+            )
+            return 1
+
     inserted = 0
     existing = Query()
 
-    for raw in SUPPLIERS_SEED:
-        supplier = SupplierCreate.model_validate(raw)
-        if suppliers_table.search(existing.name == supplier.name):
-            continue
+    for supplier in suppliers:
+        try:
+            if suppliers_table.search(existing.name == supplier.name):
+                continue
 
-        record = supplier.model_dump()
-        record["updated_at"] = datetime.now(timezone.utc).isoformat()
-        suppliers_table.insert(record)
+            record = supplier.model_dump()
+            record["updated_at"] = datetime.now(timezone.utc).isoformat()
+            suppliers_table.insert(record)
+        except (OSError, ValueError):
+            print(DB_WRITE_ERROR, file=sys.stderr)
+            return 1
+
         inserted += 1
 
     print(f"Inserted {inserted} records.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
