@@ -144,7 +144,7 @@ def update_profile(user_id: str, payload: ProfileCreate) -> Profile | None:
     if not matches:
         return None
 
-    patch = payload.model_dump()
+    patch = payload.model_dump(exclude_unset=True)
     profiles_table.update(patch, _profile_query.user_id == user_id)
 
     updated = profiles_table.search(_profile_query.user_id == user_id)
