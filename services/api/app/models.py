@@ -131,3 +131,14 @@ class Profile(BaseModel):
     name: str | None = None
     phone: str | None = None
     address: str | None = None
+
+
+class PasswordResetToken(BaseModel):
+    """One-time password reset token as stored in TinyDB (token_hash only)."""
+
+    id: str
+    user_id: str
+    token_hash: str
+    expires_at: datetime
+    used_at: datetime | None = None
+    created_at: datetime

@@ -46,7 +46,12 @@ export type ProfileUpdatePayload = {
 /** localStorage key used for the bearer access token. */
 export const TOKEN_KEY = "trackflow_token";
 
-const PUBLIC_AUTH_PATHS = new Set(["/login", "/register"]);
+const PUBLIC_AUTH_PATHS = new Set([
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+]);
 
 /** A single Pydantic validation error entry. */
 export type ValidationErrorItem = {
@@ -266,4 +271,65 @@ export async function updateProfile(
     );
   }
   return (await response.json()) as Profile;
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+  const response = await fetch(`${getBaseUrl()}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!response.ok) {
+    const err = await readApiError(
+      response,
+      `Forgot password failed (${response.status})`,
+    );
+    throw new Error(
+      typeof err === "string" ? err : "Forgot password failed",
+    );
+  }
+}
+
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<void> {
+  const response = await fetch(`${getBaseUrl()}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+  if (!response.ok) {
+    const err = await readApiError(
+      response,
+      `Reset password failed (${response.status})`,
+    );
+    throw new Error(
+      typeof err === "string" ? err : "Reset password failed",
+    );
+  }
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const response = await fetch(`${getBaseUrl()}/auth/change-password`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+  if (!response.ok) {
+    redirectIfUnauthorized(response);
+    const err = await readApiError(
+      response,
+      `Change password failed (${response.status})`,
+    );
+    throw new Error(
+      typeof err === "string" ? err : "Change password failed",
+    );
+  }
 }
