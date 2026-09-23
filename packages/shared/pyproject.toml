@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shared"
+version = "0.1.0"
+description = "Shared TrackFlow domain rules (incidents and more)"
+requires-python = ">=3.10"
+dependencies = [
+    "incident-analysis",
+]
+
+# Top-level module: import incident_rules from this directory.
+[tool.setuptools]
+py-modules = ["incident_rules"]
+
+[tool.uv.sources]
+incident-analysis = { path = "../incident_analysis", editable = true }

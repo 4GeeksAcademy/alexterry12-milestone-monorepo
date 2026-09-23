@@ -15,6 +15,7 @@
 - Removed root `node_modules` from all git history; added standard Node `.gitignore` (GitHub Node.gitignore)
 
 ## In progress
+- Centralized Incident Manager complete path: models/seed/router/UI; rules consolidated in `packages/shared/incident_rules.py` (single source of truth, editable via api pyproject).
 - AUTH-02 password reset UI in uis/backoffice: `/forgot-password`, `/reset-password` (Suspense + `?token=`), `/account/change-password`, login `?reset=1` banner + forgot link. Public paths updated in AuthGuard/authApi. API clients: `forgotPassword`, `resetPassword`, `changePassword`.
 - AUTH-02 API password lifecycle already in services/api (forgot/reset/change-password + Resend).
 

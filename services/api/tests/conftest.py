@@ -47,6 +47,7 @@ _memory_db = TinyDB(storage=MemoryStorage)
 _database_stub = types.ModuleType("app.database")
 _database_stub.db = _memory_db
 _database_stub.suppliers_table = _memory_db.table("suppliers")
+_database_stub.incidents_table = _memory_db.table("incidents")
 _database_stub.users_table = _memory_db.table("users")
 _database_stub.profiles_table = _memory_db.table("profiles")
 _database_stub.password_reset_tokens_table = _memory_db.table(
