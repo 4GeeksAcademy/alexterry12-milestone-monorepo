@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from app.database import suppliers_table
-from app.models import VALID_STATUSES, SupplierCreate, SupplierStatus
+from app.dependencies import get_current_user
+from app.models import VALID_STATUSES, SupplierCreate, SupplierStatus, User
 
 router = APIRouter(prefix="/api/suppliers", tags=["suppliers"])
 
@@ -37,7 +38,10 @@ def _get_or_404(supplier_id: int) -> tuple[int, dict[str, Any]]:
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create_supplier(payload: SupplierCreate) -> dict[str, Any]:
+def create_supplier(
+    payload: SupplierCreate,
+    _: Annotated[User, Depends(get_current_user)],
+) -> dict[str, Any]:
     record = payload.model_dump()
     record["updated_at"] = datetime.now(timezone.utc).isoformat()
     doc_id = suppliers_table.insert(record)
@@ -47,6 +51,7 @@ def create_supplier(payload: SupplierCreate) -> dict[str, Any]:
 
 @router.get("/")
 def list_suppliers(
+    _: Annotated[User, Depends(get_current_user)],
     country: str | None = Query(default=None),
     category: str | None = Query(default=None),
 ) -> list[dict[str, Any]]:
@@ -64,13 +69,20 @@ def list_suppliers(
 
 
 @router.get("/{supplier_id}")
-def get_supplier(supplier_id: int) -> dict[str, Any]:
+def get_supplier(
+    supplier_id: int,
+    _: Annotated[User, Depends(get_current_user)],
+) -> dict[str, Any]:
     doc_id, doc = _get_or_404(supplier_id)
     return _with_id(doc_id, doc)
 
 
 @router.patch("/{supplier_id}/rate")
-def update_supplier_rate(supplier_id: int, payload: RateUpdate) -> dict[str, Any]:
+def update_supplier_rate(
+    supplier_id: int,
+    payload: RateUpdate,
+    _: Annotated[User, Depends(get_current_user)],
+) -> dict[str, Any]:
     _get_or_404(supplier_id)
     suppliers_table.update(
         {
@@ -84,7 +96,11 @@ def update_supplier_rate(supplier_id: int, payload: RateUpdate) -> dict[str, Any
 
 
 @router.patch("/{supplier_id}/status")
-def update_supplier_status(supplier_id: int, payload: StatusUpdate) -> dict[str, Any]:
+def update_supplier_status(
+    supplier_id: int,
+    payload: StatusUpdate,
+    _: Annotated[User, Depends(get_current_user)],
+) -> dict[str, Any]:
     if payload.status not in VALID_STATUSES:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -97,6 +113,9 @@ def update_supplier_status(supplier_id: int, payload: StatusUpdate) -> dict[str,
 
 
 @router.delete("/{supplier_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_supplier(supplier_id: int) -> None:
+def delete_supplier(
+    supplier_id: int,
+    _: Annotated[User, Depends(get_current_user)],
+) -> None:
     _get_or_404(supplier_id)
     suppliers_table.remove(doc_ids=[supplier_id])

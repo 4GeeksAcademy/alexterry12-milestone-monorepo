@@ -2,6 +2,11 @@
  * Client for TrackFlow company API — supplier directory.
  */
 
+import {
+  authHeaders,
+  redirectIfUnauthorized,
+} from "@/lib/authApi";
+
 export type SupplierStatus = "active" | "suspended";
 export type SupplierCountry = "USA" | "Spain";
 export type SupplierCurrency = "USD" | "EUR";
@@ -96,8 +101,11 @@ export async function listSuppliers(filters?: {
   if (filters?.category) params.set("category", filters.category);
   const qs = params.toString();
   const url = `${getBaseUrl()}/api/suppliers/${qs ? `?${qs}` : ""}`;
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: authHeaders(),
+  });
   if (!response.ok) {
+    redirectIfUnauthorized(response);
     throw new Error(
       await readApiError(response, `List failed (${response.status})`),
     );
@@ -110,10 +118,11 @@ export async function createSupplier(
 ): Promise<Supplier> {
   const response = await fetch(`${getBaseUrl()}/api/suppliers/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
+    redirectIfUnauthorized(response);
     throw new Error(
       await readApiError(response, `Create failed (${response.status})`),
     );
@@ -127,10 +136,11 @@ export async function updateSupplierRate(
 ): Promise<Supplier> {
   const response = await fetch(`${getBaseUrl()}/api/suppliers/${id}/rate`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify({ rate_per_shipment }),
   });
   if (!response.ok) {
+    redirectIfUnauthorized(response);
     throw new Error(
       await readApiError(response, `Rate update failed (${response.status})`),
     );
@@ -144,10 +154,11 @@ export async function updateSupplierStatus(
 ): Promise<Supplier> {
   const response = await fetch(`${getBaseUrl()}/api/suppliers/${id}/status`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify({ status }),
   });
   if (!response.ok) {
+    redirectIfUnauthorized(response);
     throw new Error(
       await readApiError(response, `Status update failed (${response.status})`),
     );
