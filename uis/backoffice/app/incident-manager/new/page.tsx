@@ -51,8 +51,8 @@ export default function NewIncidentPage() {
     return errors;
   }
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function onSubmit(e?: FormEvent) {
+    e?.preventDefault();
     setBannerError(null);
     setSuccess(false);
 
@@ -105,9 +105,27 @@ export default function NewIncidentPage() {
         </p>
       </div>
 
-      {bannerError && (
-        <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-base text-red-700">
-          {bannerError}
+      {bannerError && !submitting && (
+        <div
+          className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-base text-red-700"
+          role="alert"
+        >
+          <p>{bannerError}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={() => void onSubmit()}
+              className="min-h-12 rounded-md border border-red-300 bg-surface px-4 py-2 text-base font-medium text-red-700 hover:bg-red-100"
+            >
+              Try again
+            </button>
+            <Link
+              href="/incident-manager"
+              className="text-base font-medium text-red-700 underline"
+            >
+              Back to Incident Manager
+            </Link>
+          </div>
         </div>
       )}
 
@@ -124,7 +142,10 @@ export default function NewIncidentPage() {
       )}
 
       <section className="rounded-lg border border-line bg-surface p-5">
-        <form onSubmit={onSubmit} className="flex flex-col gap-5">
+        <form
+          onSubmit={(e) => void onSubmit(e)}
+          className="flex flex-col gap-5"
+        >
           <label className={labelClass}>
             Title
             <input

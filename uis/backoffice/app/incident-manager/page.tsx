@@ -35,6 +35,37 @@ function Section({
   );
 }
 
+function ErrorPanel({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div
+      className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+      role="alert"
+    >
+      <p>{message}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-4">
+        {onRetry ? (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="rounded-md border border-red-300 bg-surface px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100"
+          >
+            Try again
+          </button>
+        ) : null}
+        <Link href="/" className="text-sm font-medium text-red-800 underline">
+          Back to home
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function formatDate(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
@@ -86,7 +117,13 @@ export default function IncidentManagerPage() {
   const [filtersActive, setFiltersActive] = useState(false);
 
   const [rowBusy, setRowBusy] = useState<Record<number, boolean>>({});
-  const [notify, setNotify] = useState<string | null>(null);
+  const [statusUpdateError, setStatusUpdateError] = useState<string | null>(
+    null,
+  );
+  const [failedStatusChange, setFailedStatusChange] = useState<{
+    id: number;
+    next: IncidentStatus;
+  } | null>(null);
 
   const loadSummary = useCallback(async () => {
     setSummaryLoading(true);
@@ -139,7 +176,8 @@ export default function IncidentManagerPage() {
   const onStatusChange = async (incident: Incident, next: IncidentStatus) => {
     if (next === incident.status) return;
     const previous = incident.status;
-    setNotify(null);
+    setStatusUpdateError(null);
+    setFailedStatusChange(null);
     setIncidents((prev) =>
       prev.map((item) =>
         item.id === incident.id ? { ...item, status: next } : item,
@@ -158,14 +196,22 @@ export default function IncidentManagerPage() {
           item.id === incident.id ? { ...item, status: previous } : item,
         ),
       );
-      setNotify(
+      setStatusUpdateError(
         err instanceof Error
           ? err.message
           : "Could not update the status. Please try again.",
       );
+      setFailedStatusChange({ id: incident.id, next });
     } finally {
       setRowBusy((prev) => ({ ...prev, [incident.id]: false }));
     }
+  };
+
+  const retryStatusChange = () => {
+    if (!failedStatusChange) return;
+    const target = incidents.find((item) => item.id === failedStatusChange.id);
+    if (!target) return;
+    void onStatusChange(target, failedStatusChange.next);
   };
 
   const statusChoices = (current: IncidentStatus): IncidentStatus[] => {
@@ -196,10 +242,11 @@ export default function IncidentManagerPage() {
         </Link>
       </div>
 
-      {notify && (
-        <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {notify}
-        </div>
+      {statusUpdateError && (
+        <ErrorPanel
+          message={statusUpdateError}
+          onRetry={failedStatusChange ? retryStatusChange : undefined}
+        />
       )}
 
       <Section title="Summary">
@@ -207,16 +254,10 @@ export default function IncidentManagerPage() {
           <p className="text-sm text-muted">Loading summary…</p>
         )}
         {summaryError && !summaryLoading && (
-          <div className="space-y-3">
-            <p className="text-sm text-red-700">{summaryError}</p>
-            <button
-              type="button"
-              onClick={() => void loadSummary()}
-              className="rounded-md border border-line px-3 py-2 text-sm font-medium text-ink hover:bg-canvas"
-            >
-              Retry
-            </button>
-          </div>
+          <ErrorPanel
+            message={summaryError}
+            onRetry={() => void loadSummary()}
+          />
         )}
         {summary && !summaryLoading && !summaryError && (
           <div className="space-y-5">
@@ -231,28 +272,28 @@ export default function IncidentManagerPage() {
                 title="By status"
                 entries={STATUS_OPTIONS.map((opt) => ({
                   label: opt.label,
-                  count: summary.by_status[opt.value] ?? 0,
+                  count: summary.by_status?.[opt.value] ?? 0,
                 }))}
               />
               <SummaryGroup
                 title="By category"
                 entries={CATEGORY_OPTIONS.map((opt) => ({
                   label: opt.label,
-                  count: summary.by_category[opt.value] ?? 0,
+                  count: summary.by_category?.[opt.value] ?? 0,
                 }))}
               />
               <SummaryGroup
                 title="By origin"
                 entries={ORIGIN_OPTIONS.map((opt) => ({
                   label: opt.label,
-                  count: summary.by_origin[opt.value] ?? 0,
+                  count: summary.by_origin?.[opt.value] ?? 0,
                 }))}
               />
               <SummaryGroup
                 title="By branch"
                 entries={BRANCH_OPTIONS.map((opt) => ({
                   label: opt.label,
-                  count: summary.by_branch[opt.value] ?? 0,
+                  count: summary.by_branch?.[opt.value] ?? 0,
                 }))}
               />
             </div>
@@ -313,16 +354,10 @@ export default function IncidentManagerPage() {
       <Section title="Incidents">
         {listLoading && <p className="text-sm text-muted">Loading incidents…</p>}
         {listError && !listLoading && (
-          <div className="space-y-3">
-            <p className="text-sm text-red-700">{listError}</p>
-            <button
-              type="button"
-              onClick={() => void loadIncidents()}
-              className="rounded-md border border-line px-3 py-2 text-sm font-medium text-ink hover:bg-canvas"
-            >
-              Retry
-            </button>
-          </div>
+          <ErrorPanel
+            message={listError}
+            onRetry={() => void loadIncidents()}
+          />
         )}
         {!listLoading && !listError && incidents.length === 0 && (
           <p className="text-sm text-muted">

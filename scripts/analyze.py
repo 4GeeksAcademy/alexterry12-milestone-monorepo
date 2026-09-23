@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import csv
 import sys
 from pathlib import Path
 
@@ -16,6 +17,7 @@ if str(_PACKAGES_DIR) not in sys.path:
 from incident_analysis import (  # noqa: E402
     CATEGORY_ORDER,
     COUNTRY_ORDER,
+    REQUIRED_CSV_COLUMNS,
     RULE_CARRIER,
     RULE_CATEGORY,
     RULE_CLOSED_NO_SCORE,
@@ -26,6 +28,50 @@ from incident_analysis import (  # noqa: E402
     analyze,
     write_results_csv,
 )
+
+
+def _read_error_message(path: Path, exc: Exception) -> str:
+    """One readable line per failure kind. Users never see a traceback for these."""
+    if isinstance(exc, FileNotFoundError):
+        return f"Error: file not found: {path}. Check the path and try again."
+    if isinstance(exc, PermissionError):
+        return (
+            f"Error: cannot read {path}: permission denied. "
+            "Check the file permissions."
+        )
+    if isinstance(exc, UnicodeDecodeError):
+        return f"Error: {path} is not valid UTF-8 text. Re-export the CSV as UTF-8."
+    if isinstance(exc, csv.Error):
+        return f"Error: could not parse {path} as CSV. Check the file format."
+    return f"Error: could not read {path}. Check that the file is accessible."
+
+
+def _csv_problem(path: Path) -> str | None:
+    """Check the file is readable and has the expected header. None means usable."""
+    try:
+        with path.open(newline="", encoding="utf-8") as handle:
+            header = next(csv.reader(handle), None)
+    except (
+        FileNotFoundError,
+        PermissionError,
+        UnicodeDecodeError,
+        csv.Error,
+        OSError,
+    ) as exc:
+        return _read_error_message(path, exc)
+
+    if header is None:
+        return f"Error: {path} is empty. Export the incidents CSV again."
+
+    present = {name.strip() for name in header if name is not None}
+    missing = REQUIRED_CSV_COLUMNS - present
+    if missing:
+        return (
+            f"Error: {path} is missing required columns: "
+            + ", ".join(sorted(missing))
+            + ". Check that this is the incidents export."
+        )
+    return None
 
 
 def pct(part: int, whole: int) -> str:
@@ -104,17 +150,60 @@ def main() -> int:
         print(f"Error: file not found: {path}", file=sys.stderr)
         return 1
 
-    data = analyze(path)
+    problem = _csv_problem(path)
+    if problem is not None:
+        print(problem, file=sys.stderr)
+        return 1
+
+    try:
+        data = analyze(path)
+    except (
+        FileNotFoundError,
+        PermissionError,
+        UnicodeDecodeError,
+        csv.Error,
+        OSError,
+    ) as exc:
+        print(_read_error_message(path, exc), file=sys.stderr)
+        return 1
+    except (KeyError, ValueError):
+        print(
+            f"Error: unexpected data in {path}. "
+            "Check that this is a complete incidents export.",
+            file=sys.stderr,
+        )
+        return 1
+
     print_summary(data)
 
-    answer = input("Export results to CSV? [y / n]: ").strip().lower()
+    try:
+        answer = input("Export results to CSV? [y / n]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print("\nSkipping CSV export (no answer received).", file=sys.stderr)
+        return 0
+
     if answer == "y":
         out = Path("results.csv")
-        write_results_csv(data, out)
-        print(f"Wrote {out.resolve()}")
+        try:
+            write_results_csv(data, out)
+        except PermissionError:
+            print(
+                f"Error: cannot write {out}: permission denied. "
+                "Check the file permissions.",
+                file=sys.stderr,
+            )
+            return 1
+        except OSError:
+            print(
+                f"Error: could not write {out}. "
+                "Check the available disk space and permissions.",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"Wrote {out}")
 
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())

@@ -150,7 +150,11 @@ async function readIncidentApiError(
       return new IncidentApiError("Something went wrong. Please try again.");
     }
   } catch {
-    // ignore parse errors
+    if (process.env.NODE_ENV !== "production") {
+      console.error(
+        `[incidentManagerApi] Error response was not JSON (status ${response.status}).`,
+      );
+    }
   }
   return new IncidentApiError(fallback);
 }

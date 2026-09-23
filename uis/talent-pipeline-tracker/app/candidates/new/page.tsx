@@ -60,8 +60,8 @@ export default function NewCandidatePage() {
     return errors;
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit(event?: React.FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
     setSubmitError(null);
     setSubmitSuccess(false);
 
@@ -96,7 +96,7 @@ export default function NewCandidatePage() {
       const message =
         err instanceof Error
           ? err.message
-          : "Failed to register candidate, please try again";
+          : "Could not register the candidate. Please try again.";
       setSubmitError(message);
     } finally {
       setSubmitting(false);
@@ -132,16 +132,35 @@ export default function NewCandidatePage() {
             </div>
           )}
 
-          {submitError && (
+          {submitError && !submitting && (
             <div
               className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
               role="alert"
             >
-              {submitError}
+              <p>{submitError}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => void handleSubmit()}
+                  className="rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-800 transition-colors hover:bg-red-100"
+                >
+                  Try again
+                </button>
+                <Link
+                  href="/"
+                  className="text-sm font-medium text-red-800 underline hover:no-underline"
+                >
+                  Back to home
+                </Link>
+              </div>
             </div>
           )}
 
-          <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+          <form
+            className="space-y-4"
+            onSubmit={(event) => void handleSubmit(event)}
+            noValidate
+          >
             <div>
               <label
                 htmlFor="full_name"

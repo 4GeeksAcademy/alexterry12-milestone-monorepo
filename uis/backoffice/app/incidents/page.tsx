@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import {
   analyzeIncidents,
@@ -54,6 +55,37 @@ function Section({
   );
 }
 
+function ErrorPanel({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div
+      className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+      role="alert"
+    >
+      <p>{message}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-4">
+        {onRetry ? (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="rounded-md border border-red-300 bg-surface px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100"
+          >
+            Try again
+          </button>
+        ) : null}
+        <Link href="/" className="text-sm font-medium text-red-800 underline">
+          Back to home
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function pct(part: number, whole: number): string {
   if (whole === 0) return "0.0%";
   return `${((part / whole) * 100).toFixed(1)}%`;
@@ -92,18 +124,26 @@ export default function IncidentsPage() {
   const [busy, setBusy] = useState(false);
   const [exportBusy, setExportBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [lastFile, setLastFile] = useState<File | null>(null);
   const [summary, setSummary] = useState<IncidentAnalysisSummary | null>(null);
 
   const runAnalyze = useCallback(async (file: File) => {
     setError(null);
+    setExportError(null);
     setSummary(null);
     setSelectedName(file.name);
+    setLastFile(file);
     setBusy(true);
     try {
       const result = await analyzeIncidents(file);
       setSummary(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Analyze failed.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not analyze that file. Please try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -112,29 +152,34 @@ export default function IncidentsPage() {
   const onFileChosen = (file: File | undefined) => {
     if (!file) return;
     if (!file.name.toLowerCase().endsWith(".csv")) {
+      setLastFile(null);
       setError("Please choose a .csv file.");
       return;
     }
     void runAnalyze(file);
   };
 
-  const onExport = async () => {
-    setError(null);
+  const onExport = useCallback(async () => {
+    setExportError(null);
     setExportBusy(true);
     try {
       await downloadResultsExport();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Export failed.");
+      setExportError(
+        err instanceof Error
+          ? err.message
+          : "Could not download the results. Please try again.",
+      );
     } finally {
       setExportBusy(false);
     }
-  };
+  }, []);
 
   const triggeredRules =
     summary == null
       ? []
       : INVALID_RULE_LABELS.filter(
-          (rule) => summary.invalid_breakdown[rule.key] > 0,
+          (rule) => (summary.invalid_breakdown?.[rule.key] ?? 0) > 0,
         );
 
   return (
@@ -199,13 +244,13 @@ export default function IncidentsPage() {
         {busy ? (
           <p className="mt-4 font-mono text-sm text-muted">Analyzing…</p>
         ) : null}
-        {error ? (
-          <p
-            className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
-            role="alert"
-          >
-            {error}
-          </p>
+        {error && !busy ? (
+          <div className="mt-4">
+            <ErrorPanel
+              message={error}
+              onRetry={lastFile ? () => void runAnalyze(lastFile) : undefined}
+            />
+          </div>
         ) : null}
       </Section>
 
@@ -214,18 +259,20 @@ export default function IncidentsPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <Section title="Total records">
               <p className="font-mono text-3xl font-semibold text-accent">
-                {summary.total_records}
+                {summary.total_records ?? "—"}
               </p>
-              <p className="mt-2 text-sm text-muted">Source: {summary.source}</p>
+              <p className="mt-2 text-sm text-muted">
+                Source: {summary.source ?? "—"}
+              </p>
             </Section>
             <Section title="Valid records">
               <p className="font-mono text-3xl font-semibold text-ink">
-                {summary.valid_records}
+                {summary.valid_records ?? "—"}
               </p>
             </Section>
             <Section title="Invalid / incomplete">
               <p className="font-mono text-3xl font-semibold text-ink">
-                {summary.invalid_records}
+                {summary.invalid_records ?? "—"}
               </p>
             </Section>
           </div>
@@ -248,7 +295,7 @@ export default function IncidentsPage() {
                   >
                     <span className="text-sm text-ink">{rule.label}</span>
                     <span className="font-mono text-sm font-medium text-ink">
-                      {summary.invalid_breakdown[rule.key]}
+                      {summary.invalid_breakdown?.[rule.key] ?? 0}
                     </span>
                   </li>
                 ))}
@@ -268,7 +315,7 @@ export default function IncidentsPage() {
                 total={summary.valid_records}
                 entries={CATEGORY_ORDER.map((label) => ({
                   label,
-                  count: summary.by_category[label] ?? 0,
+                  count: summary.by_category?.[label] ?? 0,
                 }))}
               />
             </Section>
@@ -277,7 +324,7 @@ export default function IncidentsPage() {
                 total={summary.valid_records}
                 entries={STATUS_ORDER.map((label) => ({
                   label,
-                  count: summary.by_status[label] ?? 0,
+                  count: summary.by_status?.[label] ?? 0,
                 }))}
               />
             </Section>
@@ -285,11 +332,11 @@ export default function IncidentsPage() {
 
           <Section title="Satisfaction index (closed incidents)">
             <p className="font-mono text-sm text-muted">
-              Scored: {summary.satisfaction.scored_incidents} of{" "}
-              {summary.satisfaction.closed_total}
+              Scored: {summary.satisfaction?.scored_incidents ?? "—"} of{" "}
+              {summary.satisfaction?.closed_total ?? "—"}
             </p>
             <p className="mt-2 font-mono text-3xl font-semibold text-accent">
-              {summary.satisfaction.average.toFixed(2)}
+              {summary.satisfaction?.average?.toFixed(2) ?? "—"}
               <span className="text-lg text-muted"> / 5.00</span>
             </p>
             <ul className="mt-4 space-y-2">
@@ -305,25 +352,33 @@ export default function IncidentsPage() {
                     </span>
                   </span>
                   <span className="font-mono text-sm font-medium text-ink">
-                    {summary.satisfaction.score_counts[score] ?? 0}
+                    {summary.satisfaction?.score_counts?.[score] ?? 0}
                   </span>
                 </li>
               ))}
             </ul>
           </Section>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => void onExport()}
-              disabled={exportBusy}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-surface transition-colors hover:bg-accent-hover disabled:opacity-60"
-            >
-              {exportBusy ? "Downloading…" : "Download results CSV"}
-            </button>
-            <p className="font-mono text-xs text-muted">
-              GET /api/incidents/results/export
-            </p>
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void onExport()}
+                disabled={exportBusy}
+                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-surface transition-colors hover:bg-accent-hover disabled:opacity-60"
+              >
+                {exportBusy ? "Downloading…" : "Download results CSV"}
+              </button>
+              <p className="font-mono text-xs text-muted">
+                GET /api/incidents/results/export
+              </p>
+            </div>
+            {exportError && !exportBusy ? (
+              <ErrorPanel
+                message={exportError}
+                onRetry={() => void onExport()}
+              />
+            ) : null}
           </div>
         </>
       ) : null}
