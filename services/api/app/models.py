@@ -1,11 +1,11 @@
-"""Pydantic models for the TrackFlow supplier directory."""
+"""Pydantic models for the TrackFlow company API."""
 
 from __future__ import annotations
 
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 from incident_rules import (
     ALLOWED_STATUS_TRANSITIONS,
@@ -146,3 +146,66 @@ class Incident(BaseModel):
     status: IncidentStatus
     created_at: datetime
     updated_at: datetime
+
+
+Role = Literal["admin", "manager", "user"]
+
+
+class UserCreate(BaseModel):
+    """Payload to register a user. Profile fields are not stored on User."""
+
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    name: str | None = None
+    phone: str | None = None
+    address: str | None = None
+
+
+class User(BaseModel):
+    """User as stored in TinyDB (includes hashed_password)."""
+
+    id: str
+    email: EmailStr
+    hashed_password: str
+    is_active: bool = True
+    role: Role = "user"
+    created_at: datetime
+
+
+class UserPublic(BaseModel):
+    """User as returned by the API — never includes hashed_password."""
+
+    id: str
+    email: EmailStr
+    is_active: bool = True
+    role: Role = "user"
+    created_at: datetime
+
+
+class ProfileCreate(BaseModel):
+    """Optional profile fields for create/update payloads."""
+
+    name: str | None = None
+    phone: str | None = None
+    address: str | None = None
+
+
+class Profile(BaseModel):
+    """Profile as stored in TinyDB — name/phone/address live here only."""
+
+    id: str
+    user_id: str
+    name: str | None = None
+    phone: str | None = None
+    address: str | None = None
+
+
+class PasswordResetToken(BaseModel):
+    """One-time password reset token as stored in TinyDB (token_hash only)."""
+
+    id: str
+    user_id: str
+    token_hash: str
+    expires_at: datetime
+    used_at: datetime | None = None
+    created_at: datetime

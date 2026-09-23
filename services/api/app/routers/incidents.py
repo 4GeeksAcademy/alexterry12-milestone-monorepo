@@ -6,8 +6,9 @@ import csv
 import logging
 import tempfile
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import Response
 from incident_analysis import (
     REQUIRED_CSV_COLUMNS,
@@ -24,6 +25,8 @@ from incident_analysis import (
 )
 
 from app import state
+from app.dependencies import get_current_user
+from app.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +98,10 @@ def _summary_payload(data: dict) -> dict:
 
 
 @router.post("/analyze")
-async def analyze_incidents(file: UploadFile = File(...)) -> dict:
+async def analyze_incidents(
+    _: Annotated[User, Depends(get_current_user)],
+    file: UploadFile = File(...),
+) -> dict:
     """Accept a CSV upload, run shared analyze(), store result for export."""
     if not _looks_like_csv(file.filename, file.content_type):
         raise HTTPException(
@@ -169,7 +175,9 @@ async def analyze_incidents(file: UploadFile = File(...)) -> dict:
 
 
 @router.get("/results/export")
-def export_results() -> Response:
+def export_results(
+    _: Annotated[User, Depends(get_current_user)],
+) -> Response:
     """Download the last analysis as metric,value CSV (same format as results.csv)."""
     data = state.get_last_result()
     if data is None:

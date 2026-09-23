@@ -1,4 +1,4 @@
-"""TinyDB persistence for the TrackFlow supplier directory."""
+"""TinyDB persistence for the TrackFlow company API."""
 
 import logging
 from pathlib import Path
@@ -18,3 +18,6 @@ except (OSError, ValueError) as exc:
 
 suppliers_table = db.table("suppliers")
 incidents_table = db.table("incidents")
+users_table = db.table("users")
+profiles_table = db.table("profiles")
+password_reset_tokens_table = db.table("password_reset_tokens")

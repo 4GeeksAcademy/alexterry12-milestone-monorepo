@@ -3,6 +3,11 @@
  * Never reads or stores customer_email (API returns aggregates only).
  */
 
+import {
+  bearerHeaders,
+  redirectIfUnauthorized,
+} from "@/lib/authApi";
+
 export type IncidentAnalysisSummary = {
   source: string;
   total_records: number;
@@ -105,10 +110,12 @@ export async function analyzeIncidents(
 
   const response = await apiFetch(`${getBaseUrl()}/api/incidents/analyze`, {
     method: "POST",
+    headers: bearerHeaders(),
     body: form,
   });
 
   if (!response.ok) {
+    redirectIfUnauthorized(response);
     const detail =
       response.status === 400 ? await readDetailString(response) : null;
     const allowed =
@@ -127,9 +134,11 @@ export async function analyzeIncidents(
 export async function downloadResultsExport(): Promise<void> {
   const response = await apiFetch(
     `${getBaseUrl()}/api/incidents/results/export`,
+    { headers: bearerHeaders() },
   );
 
   if (!response.ok) {
+    redirectIfUnauthorized(response);
     throw new Error(
       response.status === 404
         ? "No results are available to download yet. Analyze a CSV first."

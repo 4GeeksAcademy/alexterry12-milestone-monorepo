@@ -2,6 +2,11 @@
  * Client for TrackFlow company API — supplier directory.
  */
 
+import {
+  authHeaders,
+  redirectIfUnauthorized,
+} from "@/lib/authApi";
+
 export type SupplierStatus = "active" | "suspended";
 export type SupplierCountry = "USA" | "Spain";
 export type SupplierCurrency = "USD" | "EUR";
@@ -109,8 +114,11 @@ export async function listSuppliers(filters?: {
   if (filters?.category) params.set("category", filters.category);
   const qs = params.toString();
   const url = `${getBaseUrl()}/api/suppliers/${qs ? `?${qs}` : ""}`;
-  const response = await apiFetch(url);
+  const response = await apiFetch(url, {
+    headers: authHeaders(),
+  });
   if (!response.ok) {
+    redirectIfUnauthorized(response);
     throw await apiError(
       response,
       "Could not load suppliers. Please try again.",
@@ -124,10 +132,11 @@ export async function createSupplier(
 ): Promise<Supplier> {
   const response = await apiFetch(`${getBaseUrl()}/api/suppliers/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify(payload),
   });
   if (!response.ok) {
+    redirectIfUnauthorized(response);
     throw await apiError(
       response,
       "Could not register the supplier. Please try again.",
@@ -142,10 +151,11 @@ export async function updateSupplierRate(
 ): Promise<Supplier> {
   const response = await apiFetch(`${getBaseUrl()}/api/suppliers/${id}/rate`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify({ rate_per_shipment }),
   });
   if (!response.ok) {
+    redirectIfUnauthorized(response);
     throw await apiError(response, "Could not update the rate. Please try again.");
   }
   return (await response.json()) as Supplier;
@@ -157,10 +167,11 @@ export async function updateSupplierStatus(
 ): Promise<Supplier> {
   const response = await apiFetch(`${getBaseUrl()}/api/suppliers/${id}/status`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify({ status }),
   });
   if (!response.ok) {
+    redirectIfUnauthorized(response);
     throw await apiError(
       response,
       "Could not update the status. Please try again.",
