@@ -1,11 +1,10 @@
 """TrackFlow centralized company API — incident analysis (Phase 2)."""
-
 import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import incidents, suppliers
+from app.routers import auth, incidents, profiles, suppliers, users
 
 app = FastAPI(
     title="TrackFlow Company API",
@@ -35,8 +34,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(incidents.router)
+app.include_router(profiles.router)
 app.include_router(suppliers.router)
+app.include_router(users.router)
 
 
 @app.get("/health")
