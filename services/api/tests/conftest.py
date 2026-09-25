@@ -21,6 +21,7 @@ os.environ["RESEND_API_KEY"] = "re_test_not_a_real_key"
 os.environ["FRONTEND_URL"] = "http://test.local"
 
 import bcrypt as _bcrypt_lib
+from sqlmodel import Session, create_engine
 from tinydb import TinyDB
 from tinydb.storages import MemoryStorage
 
@@ -53,6 +54,19 @@ _database_stub.profiles_table = _memory_db.table("profiles")
 _database_stub.password_reset_tokens_table = _memory_db.table(
     "password_reset_tokens"
 )
+_test_engine = create_engine("sqlite://")
+_database_stub.engine = _test_engine
+
+
+def _get_db():
+    session = Session(_test_engine)
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+_database_stub.get_db = _get_db
 sys.modules["app.database"] = _database_stub
 
 import app.database as database  # noqa: E402

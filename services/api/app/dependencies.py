@@ -7,11 +7,11 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
-from app.models import User
+from app.schemas import User
 from app.services.users import get_user_by_id
 from app.tokens import decode_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 _INVALID_CREDENTIALS = "Could not validate credentials"
 _AUTH_HEADER = {"WWW-Authenticate": "Bearer"}

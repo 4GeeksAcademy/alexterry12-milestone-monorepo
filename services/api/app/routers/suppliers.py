@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from app.database import suppliers_table
 from app.dependencies import get_current_user
-from app.models import VALID_STATUSES, SupplierCreate, SupplierStatus, User
+from app.schemas import VALID_STATUSES, SupplierCreate, SupplierStatus, User
 
 logger = logging.getLogger(__name__)
 

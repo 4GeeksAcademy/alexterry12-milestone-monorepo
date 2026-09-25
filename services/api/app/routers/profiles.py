@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.dependencies import get_current_user
-from app.models import Profile, ProfileCreate, User
+from app.schemas import Profile, ProfileCreate, User
 from app.services.users import get_profile_by_user_id, update_profile
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])

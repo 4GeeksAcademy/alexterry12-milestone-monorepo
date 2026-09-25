@@ -61,6 +61,14 @@ this API. `CORSMiddleware` allows origins listed in `CORS_ORIGINS`
 `FRONTEND_URL` is the backoffice origin used to build reset links
 (e.g. `http://localhost:3000`).
 
+### Inventory (TrackFlow)
+
+All `/inventory` routes require authentication. Stock is computed per SKU
+per warehouse (each SKU belongs to one warehouse, and movements must match
+it). `current_stock` is never stored. The router lives at
+`services/api/app/routers/inventory.py`. Seed demo data from `services/api`
+with `uv run python seed_inventory.py`.
+
 ### Example requests
 
 ```bash

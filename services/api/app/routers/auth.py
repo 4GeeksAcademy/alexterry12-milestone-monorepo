@@ -11,10 +11,11 @@ from typing import Annotated
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, Field
 
 from app.dependencies import get_current_user
-from app.models import Profile, Role, User
+from app.schemas import Profile, Role, User
 from app.security import hash_password, verify_password
 from app.services.email import send_password_reset_email
 from app.services.password_reset import (
@@ -91,17 +92,16 @@ def _as_utc(value: datetime) -> datetime:
     return value.astimezone(timezone.utc)
 
 
-@router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest) -> TokenResponse:
-    """Authenticate with email and password; return a bearer access token."""
-    user = get_user_by_email(str(payload.email))
+def _authenticate_and_issue_token(email: str, password: str) -> TokenResponse:
+    """Check credentials the same way for JSON login and the OAuth2 token form."""
+    user = get_user_by_email(email)
     if user is None or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=_LOGIN_FAILED_DETAIL,
         )
 
-    if not verify_password(payload.password, user.hashed_password):
+    if not verify_password(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=_LOGIN_FAILED_DETAIL,
@@ -109,6 +109,20 @@ def login(payload: LoginRequest) -> TokenResponse:
 
     token = create_access_token(user.id)
     return TokenResponse(access_token=token)
+
+
+@router.post("/login", response_model=TokenResponse)
+def login(payload: LoginRequest) -> TokenResponse:
+    """Authenticate with email and password; return a bearer access token."""
+    return _authenticate_and_issue_token(str(payload.email), payload.password)
+
+
+@router.post("/token", response_model=TokenResponse)
+def login_for_swagger(
+    form: Annotated[OAuth2PasswordRequestForm, Depends()],
+) -> TokenResponse:
+    """OAuth2 password-flow token endpoint for the Swagger Authorize button."""
+    return _authenticate_and_issue_token(form.username, form.password)
 
 
 @router.get("/me", response_model=MeResponse)

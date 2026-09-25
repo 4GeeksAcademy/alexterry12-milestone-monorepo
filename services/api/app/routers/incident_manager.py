@@ -10,7 +10,7 @@ from fastapi import APIRouter, Body, HTTPException, Query, status
 from pydantic import BaseModel, ValidationError
 
 from app.database import incidents_table
-from app.models import (
+from app.schemas import (
     ALLOWED_STATUS_TRANSITIONS,
     VALID_INCIDENT_BRANCHES,
     VALID_INCIDENT_CATEGORIES,

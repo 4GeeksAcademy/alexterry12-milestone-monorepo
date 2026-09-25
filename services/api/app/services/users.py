@@ -8,7 +8,7 @@ from uuid import uuid4
 from tinydb import Query
 
 from app.database import profiles_table, users_table
-from app.models import Profile, ProfileCreate, Role, User, UserCreate
+from app.schemas import Profile, ProfileCreate, Role, User, UserCreate
 from app.security import hash_password
 
 _user_query = Query()

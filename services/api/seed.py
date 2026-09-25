@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pydantic import ValidationError
 from tinydb import Query
 
-from app.models import SupplierCreate
+from app.schemas import SupplierCreate
 
 DB_ERROR = (
     "Error: could not open the supplier database. Check that "
