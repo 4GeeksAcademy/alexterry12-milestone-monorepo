@@ -8,7 +8,7 @@ from uuid import uuid4
 from tinydb import Query
 
 from app.database import password_reset_tokens_table
-from app.models import PasswordResetToken
+from app.schemas import PasswordResetToken
 
 _token_query = Query()
 

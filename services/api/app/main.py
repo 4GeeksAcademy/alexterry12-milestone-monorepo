@@ -2,6 +2,7 @@
 
 import logging
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import (
@@ -11,11 +12,21 @@ from fastapi.exception_handlers import (
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
+from sqlmodel import SQLModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.routers import auth, incident_manager, incidents, profiles, suppliers, users
+import app.models  # noqa: F401 — register inventory tables on SQLModel.metadata
+from app.database import engine
+from app.routers import auth, incident_manager, incidents, inventory, profiles, suppliers, users
 
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    SQLModel.metadata.create_all(engine)
+    yield
+
 
 app = FastAPI(
     title="TrackFlow Company API",
@@ -24,6 +35,7 @@ app = FastAPI(
         "and supplier directory."
     ),
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 # Browser frontends (e.g. uis/backoffice on :3000) call this API on another
@@ -48,6 +60,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(incidents.router)
 app.include_router(incident_manager.router)
+app.include_router(inventory.router)
 app.include_router(profiles.router)
 app.include_router(suppliers.router)
 app.include_router(users.router)

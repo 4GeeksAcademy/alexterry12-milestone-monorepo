@@ -24,7 +24,7 @@ for _path in (_API_ROOT, _SHARED_ROOT):
 from pydantic import ValidationError  # noqa: E402
 from tinydb import Query  # noqa: E402
 
-from app.models import Incident  # noqa: E402
+from app.schemas import Incident  # noqa: E402
 from incident_analysis import REQUIRED_CSV_COLUMNS  # noqa: E402
 from incident_rules import (  # noqa: E402
     CSV_BRANCH_MAP,

@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
 
 from app.dependencies import get_current_user
-from app.models import Role, User, UserCreate, UserPublic
+from app.schemas import Role, User, UserCreate, UserPublic
 from app.services.users import (
     create_user,
     delete_user,
