@@ -6,6 +6,15 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(process.cwd(), "../.."),
   },
+  async redirects() {
+    return [
+      {
+        source: "/backoffice/inventory/:path*",
+        destination: "/inventory/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
