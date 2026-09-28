@@ -1,0 +1,18 @@
+# Files and folders Docker should NOT copy into the backend image.
+# **/ at the start means "in any folder", so these rules reach inside services/api/.
+
+# Python's compiled-code caches: regenerated automatically, not source code.
+**/__pycache__
+**/*.pyc
+
+# Environment files: may contain secrets and must never go into an image.
+**/.env*
+
+# Tests: the container runs the API, not the test suite.
+**/tests
+
+# Log files: not code, so they're not needed.
+**/*.log
+
+# Your local Python packages folder: the container installs its own.
+**/.venv

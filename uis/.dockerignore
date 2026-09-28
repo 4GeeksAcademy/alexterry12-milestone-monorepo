@@ -1,0 +1,15 @@
+# Files and folders Docker should NOT copy into the UI image.
+# **/ at the start means "in any folder", so these rules also catch
+# uis/website/... and uis/backoffice/..., not just the top of uis/.
+
+# Installed packages: the container installs its own with npm ci.
+**/node_modules
+
+# Next.js build output: regenerated automatically inside the container.
+**/.next
+
+# Environment files: may contain secrets and must never go into an image.
+**/.env*
+
+# Log files: not code, so they're not needed.
+**/*.log

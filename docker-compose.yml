@@ -1,0 +1,54 @@
+# Local development environment for the whole monorepo (ticket #infra-40).
+# From the repository root, run:  docker compose up
+# All settings and secrets come from the .env file in this folder (never committed to git).
+
+services:
+  # UI container: public website on port 3000 + internal backoffice on port 3001.
+  ui:
+    build:
+      context: ./uis
+    # start.sh runs `next dev` for both apps (website -p 3000, backoffice -p 3001).
+    command: ["sh", "./start.sh"]
+    # Lets Ctrl+C and `docker compose down` stop the container quickly and cleanly.
+    init: true
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    env_file:
+      - .env
+    volumes:
+      # Bind mount: code you edit in Cursor appears instantly inside the container (hot reload).
+      - ./uis:/app
+      # Keep the container's own installed packages and build cache, not your machine's.
+      - /app/website/node_modules
+      - /app/backoffice/node_modules
+      - /app/website/.next
+      - /app/backoffice/.next
+    depends_on:
+      - api
+    networks:
+      - healthcore-net
+
+  # API container: FastAPI on port 8001, restarted automatically on every save by --reload.
+  api:
+    build:
+      context: ./services
+      # Gives services/Dockerfile access to the two local packages in ./packages.
+      additional_contexts:
+        packages: ./packages
+    command: ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8001"]
+    init: true
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    volumes:
+      # Bind mount: Python edits on your machine trigger an automatic reload.
+      - ./services:/repo/services
+    networks:
+      - healthcore-net
+
+# An explicitly named network, so the containers find each other by service name (ui, api).
+networks:
+  healthcore-net:
+    name: healthcore-net
