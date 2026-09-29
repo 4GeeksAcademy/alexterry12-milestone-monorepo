@@ -1,0 +1,1225 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TrackFlow telemetry events",
+  "oneOf": [
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "inbound_order_created"
+            },
+            "properties": {
+              "$ref": "#/definitions/inbound_order_created"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "outbound_order_created"
+            },
+            "properties": {
+              "$ref": "#/definitions/outbound_order_created"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "stock_threshold_triggered"
+            },
+            "properties": {
+              "$ref": "#/definitions/stock_threshold_triggered"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "direct_stock_edit_rejected"
+            },
+            "properties": {
+              "$ref": "#/definitions/direct_stock_edit_rejected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "inventory_discrepancy_detected"
+            },
+            "properties": {
+              "$ref": "#/definitions/inventory_discrepancy_detected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "product_created"
+            },
+            "properties": {
+              "$ref": "#/definitions/product_created"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "outbound_order_rejected"
+            },
+            "properties": {
+              "$ref": "#/definitions/outbound_order_rejected"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "stock_loss_recorded"
+            },
+            "properties": {
+              "$ref": "#/definitions/stock_loss_recorded"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "order_validation_failed"
+            },
+            "properties": {
+              "$ref": "#/definitions/order_validation_failed"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "login_succeeded"
+            },
+            "properties": {
+              "$ref": "#/definitions/login_succeeded"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "login_failed"
+            },
+            "properties": {
+              "$ref": "#/definitions/login_failed"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "session_expired"
+            },
+            "properties": {
+              "$ref": "#/definitions/session_expired"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "user_registered"
+            },
+            "properties": {
+              "$ref": "#/definitions/user_registered"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "password_reset_requested"
+            },
+            "properties": {
+              "$ref": "#/definitions/password_reset_requested"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "password_reset_completed"
+            },
+            "properties": {
+              "$ref": "#/definitions/password_reset_completed"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "password_changed"
+            },
+            "properties": {
+              "$ref": "#/definitions/password_changed"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "api_latency_recorded"
+            },
+            "properties": {
+              "$ref": "#/definitions/api_latency_recorded"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "page_load_recorded"
+            },
+            "properties": {
+              "$ref": "#/definitions/page_load_recorded"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "api_error_occurred"
+            },
+            "properties": {
+              "$ref": "#/definitions/api_error_occurred"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "frontend_error_occurred"
+            },
+            "properties": {
+              "$ref": "#/definitions/frontend_error_occurred"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "page_viewed"
+            },
+            "properties": {
+              "$ref": "#/definitions/page_viewed"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "form_abandoned"
+            },
+            "properties": {
+              "$ref": "#/definitions/form_abandoned"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "definitions": {
+    "envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "timestamp",
+        "sessionId",
+        "userId",
+        "event_type",
+        "schemaVersion",
+        "requestId",
+        "source",
+        "properties"
+      ],
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sessionId": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "userId": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "event_type": {
+          "type": "string"
+        },
+        "schemaVersion": {
+          "const": "1.0.0"
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "api",
+            "backoffice"
+          ]
+        },
+        "properties": {
+          "type": "object"
+        }
+      }
+    },
+    "inbound_order_created": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warehouse",
+        "country",
+        "client_id",
+        "product_id",
+        "product_category",
+        "quantity"
+      ],
+      "properties": {
+        "warehouse": {
+          "type": "string",
+          "enum": [
+            "los_angeles",
+            "zaragoza"
+          ]
+        },
+        "country": {
+          "type": "string",
+          "enum": [
+            "US",
+            "ES"
+          ]
+        },
+        "client_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_category": {
+          "type": "string",
+          "enum": [
+            "fashion",
+            "electronics",
+            "cosmetics"
+          ]
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "outbound_order_created": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warehouse",
+        "country",
+        "client_id",
+        "product_id",
+        "product_category",
+        "quantity"
+      ],
+      "properties": {
+        "warehouse": {
+          "type": "string",
+          "enum": [
+            "los_angeles",
+            "zaragoza"
+          ]
+        },
+        "country": {
+          "type": "string",
+          "enum": [
+            "US",
+            "ES"
+          ]
+        },
+        "client_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_category": {
+          "type": "string",
+          "enum": [
+            "fashion",
+            "electronics",
+            "cosmetics"
+          ]
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "stock_threshold_triggered": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warehouse",
+        "country",
+        "client_id",
+        "product_id",
+        "product_category",
+        "quantity",
+        "min_stock_threshold",
+        "stock_before",
+        "stock_after"
+      ],
+      "properties": {
+        "warehouse": {
+          "type": "string",
+          "enum": [
+            "los_angeles",
+            "zaragoza"
+          ]
+        },
+        "country": {
+          "type": "string",
+          "enum": [
+            "US",
+            "ES"
+          ]
+        },
+        "client_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_category": {
+          "type": "string",
+          "enum": [
+            "fashion",
+            "electronics",
+            "cosmetics"
+          ]
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "min_stock_threshold": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stock_before": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stock_after": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "direct_stock_edit_rejected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warehouse",
+        "country",
+        "client_id",
+        "product_id",
+        "product_category",
+        "quantity",
+        "http_method",
+        "trigger",
+        "rejected_keys"
+      ],
+      "properties": {
+        "warehouse": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "los_angeles",
+                "zaragoza"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "country": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "US",
+                "ES"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "client_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "product_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "product_category": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "fashion",
+                "electronics",
+                "cosmetics"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quantity": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "http_method": {
+          "type": "string",
+          "enum": [
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE"
+          ]
+        },
+        "trigger": {
+          "type": "string",
+          "enum": [
+            "method_not_allowed",
+            "forbidden_body_key"
+          ]
+        },
+        "rejected_keys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "stock",
+              "current_stock",
+              "quantity"
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "inventory_discrepancy_detected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warehouse",
+        "country",
+        "client_id",
+        "product_id",
+        "product_category",
+        "quantity",
+        "system_quantity",
+        "counted_quantity"
+      ],
+      "properties": {
+        "warehouse": {
+          "type": "string",
+          "enum": [
+            "los_angeles",
+            "zaragoza"
+          ]
+        },
+        "country": {
+          "type": "string",
+          "enum": [
+            "US",
+            "ES"
+          ]
+        },
+        "client_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_category": {
+          "type": "string",
+          "enum": [
+            "fashion",
+            "electronics",
+            "cosmetics"
+          ]
+        },
+        "quantity": {
+          "type": "integer"
+        },
+        "system_quantity": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "counted_quantity": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "product_created": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warehouse",
+        "country",
+        "client_id",
+        "product_id",
+        "product_category",
+        "quantity"
+      ],
+      "properties": {
+        "warehouse": {
+          "type": "string",
+          "enum": [
+            "los_angeles",
+            "zaragoza"
+          ]
+        },
+        "country": {
+          "type": "string",
+          "enum": [
+            "US",
+            "ES"
+          ]
+        },
+        "client_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_category": {
+          "type": "string",
+          "enum": [
+            "fashion",
+            "electronics",
+            "cosmetics"
+          ]
+        },
+        "quantity": {
+          "type": "integer",
+          "const": 0
+        }
+      }
+    },
+    "outbound_order_rejected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warehouse",
+        "country",
+        "client_id",
+        "product_id",
+        "product_category",
+        "quantity",
+        "requested_quantity",
+        "available_quantity"
+      ],
+      "properties": {
+        "warehouse": {
+          "type": "string",
+          "enum": [
+            "los_angeles",
+            "zaragoza"
+          ]
+        },
+        "country": {
+          "type": "string",
+          "enum": [
+            "US",
+            "ES"
+          ]
+        },
+        "client_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_category": {
+          "type": "string",
+          "enum": [
+            "fashion",
+            "electronics",
+            "cosmetics"
+          ]
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "requested_quantity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "available_quantity": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "stock_loss_recorded": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "warehouse",
+        "country",
+        "client_id",
+        "product_id",
+        "product_category",
+        "quantity"
+      ],
+      "properties": {
+        "warehouse": {
+          "type": "string",
+          "enum": [
+            "los_angeles",
+            "zaragoza"
+          ]
+        },
+        "country": {
+          "type": "string",
+          "enum": [
+            "US",
+            "ES"
+          ]
+        },
+        "client_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "product_category": {
+          "type": "string",
+          "enum": [
+            "fashion",
+            "electronics",
+            "cosmetics"
+          ]
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "order_validation_failed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route",
+        "field_names"
+      ],
+      "properties": {
+        "route": {
+          "type": "string",
+          "minLength": 1
+        },
+        "field_names": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "login_succeeded": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role"
+      ],
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": [
+            "admin",
+            "manager",
+            "user"
+          ]
+        }
+      }
+    },
+    "login_failed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "email_hash"
+      ],
+      "properties": {
+        "email_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "session_expired": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route_template",
+        "method"
+      ],
+      "properties": {
+        "route_template": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "user_registered": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {}
+    },
+    "password_reset_requested": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "email_hash"
+      ],
+      "properties": {
+        "email_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "password_reset_completed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {}
+    },
+    "password_changed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {}
+    },
+    "api_latency_recorded": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "record_kind",
+            "route_template",
+            "method",
+            "count",
+            "p50_ms",
+            "p95_ms",
+            "window_start"
+          ],
+          "properties": {
+            "record_kind": {
+              "const": "minute_aggregate"
+            },
+            "route_template": {
+              "type": "string",
+              "minLength": 1
+            },
+            "method": {
+              "type": "string",
+              "minLength": 1
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "p50_ms": {
+              "type": "number",
+              "minimum": 0
+            },
+            "p95_ms": {
+              "type": "number",
+              "minimum": 0
+            },
+            "window_start": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "record_kind",
+            "route_template",
+            "method",
+            "status_code",
+            "duration_ms"
+          ],
+          "properties": {
+            "record_kind": {
+              "const": "slow_request"
+            },
+            "route_template": {
+              "type": "string",
+              "minLength": 1
+            },
+            "method": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status_code": {
+              "type": "integer"
+            },
+            "duration_ms": {
+              "type": "number",
+              "minimum": 1000
+            }
+          }
+        }
+      ]
+    },
+    "page_load_recorded": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route",
+        "load_ms"
+      ],
+      "properties": {
+        "route": {
+          "type": "string",
+          "minLength": 1
+        },
+        "load_ms": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "api_error_occurred": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route_template",
+        "method",
+        "error_class"
+      ],
+      "properties": {
+        "route_template": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "error_class": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "frontend_error_occurred": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route",
+        "error_name",
+        "error_fingerprint"
+      ],
+      "properties": {
+        "route": {
+          "type": "string",
+          "minLength": 1
+        },
+        "error_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "error_fingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "page_viewed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route"
+      ],
+      "properties": {
+        "route": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "form_abandoned": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "form_name",
+        "route",
+        "fields_touched_count"
+      ],
+      "properties": {
+        "form_name": {
+          "type": "string",
+          "enum": [
+            "login",
+            "register",
+            "forgot_password",
+            "reset_password",
+            "profile",
+            "change_password",
+            "supplier_create",
+            "incident_create"
+          ]
+        },
+        "route": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fields_touched_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
